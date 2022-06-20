@@ -21,13 +21,13 @@ void UOverheadWidget::SetDisplayText(FString TextToDisplay)
 
 void UOverheadWidget::ShowPlayerName(APawn* InPawn)
 {
-    APlayerState* PlayerState = InPawn->GetPlayerState();
-    if (PlayerState)
-    {
-        FString PlayerName = PlayerState->GetPlayerName();
-        FString NameString = FString::Printf(TEXT("Name: %s"), *PlayerName);
-        SetDisplayText(NameString);
-    }
+    //APlayerState* PlayerState = InPawn->GetPlayerState();
+    //if (PlayerState)
+    //{
+    //    FString PlayerName = PlayerState->GetPlayerName();
+    //    FString NameString = FString::Printf(TEXT("Name: %s"), *PlayerName);
+    //    SetDisplayText(NameString);
+    //}
     //ENetRole RemoteRole = InPawn->GetRemoteRole();
     //FString Role;
     //switch (RemoteRole)
