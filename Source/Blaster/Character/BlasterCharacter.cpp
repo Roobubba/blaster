@@ -56,6 +56,7 @@ void ABlasterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	FollowCamera->PostProcessSettings.bOverride_DepthOfFieldFocalDistance = 1;
 }
 
 void ABlasterCharacter::Tick(float DeltaTime)
@@ -63,6 +64,11 @@ void ABlasterCharacter::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	AimOffset(DeltaTime);
+
+	if (Combat)
+	{
+		FollowCamera->PostProcessSettings.DepthOfFieldFocalDistance = (Combat->HitTarget - FollowCamera->GetComponentLocation()).Size();
+	}
 }
 
 void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -315,7 +321,6 @@ void ABlasterCharacter::Jump()
 
 void ABlasterCharacter::TurnInPlace(float DeltaTime)
 {
-	UE_LOG(LogTemp, Warning, TEXT("AO_Yaw: %f"), AO_Yaw);
 	if (AO_Yaw > 90.f)
 	{
 		TurningInPlace = ETurningInPlace::ETIP_Right;
