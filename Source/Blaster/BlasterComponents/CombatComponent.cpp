@@ -170,15 +170,6 @@ void UCombatComponent::ServerSetAiming_Implementation(bool bIsAiming)
 	}
 }
 
-void UCombatComponent::OnRep_EquippedWeapon()
-{
-	if (EquippedWeapon && Character)
-	{
-		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
-		Character->bUseControllerRotationYaw = true;
-	}
-}
-
 void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 {
 	if (Character == nullptr || WeaponToEquip == nullptr)
@@ -198,6 +189,15 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 
 	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 	Character->bUseControllerRotationYaw = true;
+}
+
+void UCombatComponent::OnRep_EquippedWeapon()
+{
+	if (EquippedWeapon && Character)
+	{
+		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
+		Character->bUseControllerRotationYaw = true;
+	}
 }
 
 void UCombatComponent::FireButtonPressed(bool bPressed)
@@ -224,6 +224,26 @@ void UCombatComponent::Fire()
 		}
 
 		StartFireTimer();
+	}
+}
+
+void UCombatComponent::StartFireTimer()
+{
+	if (EquippedWeapon == nullptr || Character == nullptr)
+	{
+		return;
+	}
+
+	Character->GetWorldTimerManager().SetTimer(FireTimer, this, &UCombatComponent::FireTimerFinished, EquippedWeapon->GetFireDelay());
+}
+
+void UCombatComponent::FireTimerFinished()
+{
+	bCanFire = true;
+	
+	if (bFireButtonPressed && EquippedWeapon && EquippedWeapon->GetIsAutomatic())
+	{
+		Fire();
 	}
 }
 
@@ -296,25 +316,5 @@ void UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult)
 		{
 			HUDPackage.CrosshairsColour = FLinearColor::White;
 		}
-	}
-}
-
-void UCombatComponent::StartFireTimer()
-{
-	if (EquippedWeapon == nullptr || Character == nullptr)
-	{
-		return;
-	}
-
-	Character->GetWorldTimerManager().SetTimer(FireTimer, this, &UCombatComponent::FireTimerFinished, FireDelay);
-}
-
-void UCombatComponent::FireTimerFinished()
-{
-	bCanFire = true;
-	
-	if (bFireButtonPressed && bAutomatic)
-	{
-		Fire();
 	}
 }

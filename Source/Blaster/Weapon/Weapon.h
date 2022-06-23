@@ -57,6 +57,12 @@ public:
 	UPROPERTY(EditAnywhere, Category = Crosshairs)
 	float CrosshairShootingInterpSpeed = 40.f;
 
+	UPROPERTY(EditAnywhere, Category = Combat)
+	float FireDelay = 0.15f;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	bool bAutomatic = true;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -108,4 +114,6 @@ public:
 	FORCEINLINE USkeletalMeshComponent* GetWeaponMesh() const { return WeaponMesh; }
 	FORCEINLINE float GetZoomedFOV() const { return ZoomedFOV; }
 	FORCEINLINE float GetZoomInterpSpeed() const { return ZoomInterpSpeed; }
+	FORCEINLINE float GetFireDelay() const { return FireDelay; }
+	FORCEINLINE bool GetIsAutomatic() const { return bAutomatic; }
 };
