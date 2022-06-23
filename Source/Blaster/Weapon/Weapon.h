@@ -51,6 +51,12 @@ public:
 	UPROPERTY(EditAnywhere)
 	float ZoomInterpSpeed = 20.f;
 
+	UPROPERTY(EditAnywhere, Category = Crosshairs)
+	float CrosshairShootingExpansionAmount = 0.2f;
+
+	UPROPERTY(EditAnywhere, Category = Crosshairs)
+	float CrosshairShootingInterpSpeed = 40.f;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -93,7 +99,6 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class ACasing> CasingClass;
-
 
 
 public:	
