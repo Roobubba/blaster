@@ -13,6 +13,7 @@
 
 #include "Camera/CameraComponent.h"
 #include "Engine/Scene.h"
+#include "TimerManager.h"
 
 UCombatComponent::UCombatComponent()
 {
@@ -203,17 +204,26 @@ void UCombatComponent::FireButtonPressed(bool bPressed)
 {
 	bFireButtonPressed = bPressed;
 
-	if (bFireButtonPressed)
+	if (bFireButtonPressed && EquippedWeapon)
 	{
-		FHitResult HitResult;
-		TraceUnderCrosshairs(HitResult);
-		ServerFire(HitResult.ImpactPoint);
+		Fire();
+	}
+}
+
+void UCombatComponent::Fire()
+{
+	if (bCanFire)
+	{
+		bCanFire = false;
+		ServerFire(HitTarget);
 
 		if (EquippedWeapon)
 		{
 			CrosshairShootingFactor += EquippedWeapon->CrosshairShootingExpansionAmount;
 			CrosshairShootingFactor = FMath::Clamp(CrosshairShootingFactor, 0.f, 4.f);
 		}
+
+		StartFireTimer();
 	}
 }
 
@@ -287,5 +297,24 @@ void UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult)
 			HUDPackage.CrosshairsColour = FLinearColor::White;
 		}
 	}
+}
 
+void UCombatComponent::StartFireTimer()
+{
+	if (EquippedWeapon == nullptr || Character == nullptr)
+	{
+		return;
+	}
+
+	Character->GetWorldTimerManager().SetTimer(FireTimer, this, &UCombatComponent::FireTimerFinished, FireDelay);
+}
+
+void UCombatComponent::FireTimerFinished()
+{
+	bCanFire = true;
+	
+	if (bFireButtonPressed && bAutomatic)
+	{
+		Fire();
+	}
 }

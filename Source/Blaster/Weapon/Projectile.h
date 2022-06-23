@@ -40,6 +40,9 @@ private:
 	UPROPERTY(EditAnywhere)
 	class USoundCue* ImpactSound;
 
+	UPROPERTY(EditAnywhere)
+	float PhysicsImpactForce = 1.f;
+
 public:	
 	
 
