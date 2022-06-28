@@ -22,9 +22,12 @@ public:
 	virtual void OnRep_ReplicatedMovement() override;
 
 	void PlayFireMontage(bool bAiming);
+	void PlayElimMontage();
+	
+	void Eliminate();
 
-	UFUNCTION(NetMulticast, Unreliable)
-	void MulticastHit();
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastEliminate();
 
 protected:
 	virtual void BeginPlay() override;
@@ -46,6 +49,9 @@ protected:
 
 	virtual void Jump() override;
 	void PlayHitReactMontage();
+
+	UFUNCTION()
+	void ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, class AController* InstigatorController, AActor* DamageCauser);
 
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera)
@@ -83,6 +89,10 @@ private:
 	UPROPERTY(EditAnywhere, Category = Combat)
 	UAnimMontage* HitReactMontage;	
 
+	UPROPERTY(EditAnywhere, Category = Combat)
+	UAnimMontage* ElimMontage;	
+
+
 	void HideCharacterIfCameraClose();
 
 	UPROPERTY(EditAnywhere)
@@ -95,6 +105,32 @@ private:
 	float ProxyYaw;
 	float TimeSinceLastMovementReplication;
 	float CalculateSpeed();
+
+	/*
+	* Player Health
+	*/
+
+	UPROPERTY(EditAnywhere, Category = "Player Stats")
+	float MaxHealth = 100.f;
+
+	UPROPERTY(ReplicatedUsing = OnRep_Health, VisibleAnywhere, Category = "Player Stats")
+	float Health = 100.f;
+
+	UFUNCTION()
+	void OnRep_Health();
+
+	class ABlasterPlayerController* BlasterPlayerController;
+	
+	void UpdateHUDHealth();
+
+	bool bEliminated = false;
+
+	UPROPERTY(EditDefaultsOnly)
+	float EliminateDelay = 3.f;
+	
+	FTimerHandle EliminateTimer;
+
+	void EliminateTimerFinished();
 
 public:	
 	void SetOverlappingWeapon(AWeapon* Weapon);
@@ -109,6 +145,7 @@ public:
 
 	FVector GetHitTarget() const;
 
-	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+	FORCEINLINE bool IsEliminated() const { return bEliminated; }
 };
 

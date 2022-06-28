@@ -55,14 +55,8 @@ void AProjectile::BeginPlay()
 
 void AProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-	ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(OtherActor);
-	if (BlasterCharacter)
+	if (OtherComp->GetCollisionObjectType() == ECC_PhysicsMesh)
 	{
-		BlasterCharacter->MulticastHit();
-	}
-	else if (OtherComp->GetCollisionObjectType() == ECC_PhysicsMesh)
-	{
-
 		OtherComp->AddImpulseAtLocation(GetActorForwardVector() * PhysicsImpactForce, Hit.Location);
 	}
 
