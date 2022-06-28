@@ -15,6 +15,9 @@
 #include "Blaster/PlayerController/BlasterPlayerController.h"
 #include "Blaster/GameMode/BlasterGameMode.h"
 #include "TimerManager.h"
+#include "Kismet/GameplayStatics.h"
+#include "Sound/SoundCue.h"
+#include "Particles/ParticleSystemComponent.h"
 
 ABlasterCharacter::ABlasterCharacter()
 {
@@ -51,6 +54,15 @@ ABlasterCharacter::ABlasterCharacter()
 	MinNetUpdateFrequency = 33.f;
 
 	DissolveTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("TimelineComponent"));
+}
+
+void ABlasterCharacter::Destroyed()
+{
+	if (ElimBotComponent)
+	{
+		ElimBotComponent->DestroyComponent();
+	}
+	Super::Destroyed();
 }
 
 void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -112,6 +124,11 @@ void ABlasterCharacter::Tick(float DeltaTime)
 
 void ABlasterCharacter::Eliminate()
 {
+	if (Combat && Combat->EquippedWeapon)
+	{
+		Combat->EquippedWeapon->Dropped();
+	}
+
 	MulticastEliminate();
 	GetWorldTimerManager().SetTimer(
 		EliminateTimer,
@@ -128,6 +145,8 @@ void ABlasterCharacter::EliminateTimerFinished()
 	{
 		BlasterGameMode->RequestRespawn(this, Controller);
 	}
+
+
 }
 
 void ABlasterCharacter::MulticastEliminate_Implementation()
@@ -144,6 +163,37 @@ void ABlasterCharacter::MulticastEliminate_Implementation()
 	}
 
 	StartDissolve();
+
+	GetCharacterMovement()->DisableMovement();
+	GetCharacterMovement()->StopMovementImmediately();
+	if (BlasterPlayerController)
+	{
+		DisableInput(BlasterPlayerController);
+	}
+
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	if (ElimBotEffect)
+	{
+		FVector ElimBotSpawnPoint(GetActorLocation().X, GetActorLocation().Y, GetActorLocation().Z + 200.f);
+		ElimBotComponent = UGameplayStatics::SpawnEmitterAtLocation(
+			GetWorld(),
+			ElimBotEffect,
+			ElimBotSpawnPoint,
+			GetActorRotation()
+			);
+	}
+
+	if (ElimBotSound)
+	{
+		UGameplayStatics::SpawnSoundAtLocation(
+			this,
+			ElimBotSound,
+			GetActorLocation()
+		);
+	}
+
 }
 
 void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

@@ -17,6 +17,9 @@ class BLASTER_API ABlasterCharacter : public ACharacter, public IInteractWithCro
 
 public:
 	ABlasterCharacter();
+	
+	virtual void Destroyed() override;
+
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
@@ -157,6 +160,18 @@ private:
 	//MI set on the blueprint, used with the dynamic MI
 	UPROPERTY(EditAnywhere, Category = Elimination)
 	UMaterialInstance* DissolveMaterialInstance;
+
+	/*
+	 Elim Bot
+	*/
+	UPROPERTY(EditAnywhere)
+	UParticleSystem* ElimBotEffect;
+
+	UPROPERTY(VisibleAnywhere)
+	UParticleSystemComponent* ElimBotComponent;
+
+	UPROPERTY(EditAnywhere)
+	class USoundCue* ElimBotSound;
 
 public:	
 	void SetOverlappingWeapon(AWeapon* Weapon);
