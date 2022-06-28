@@ -6,7 +6,9 @@
 #include "GameFramework/Character.h"
 #include "Blaster/BlasterTypes/TurningInPlace.h"
 #include "Blaster/Interfaces/InteractWithCrosshairsInterface.h"
+#include "Components/TimelineComponent.h"
 #include "BlasterCharacter.generated.h"
+
 
 UCLASS()
 class BLASTER_API ABlasterCharacter : public ACharacter, public IInteractWithCrosshairsInterface
@@ -131,6 +133,30 @@ private:
 	FTimerHandle EliminateTimer;
 
 	void EliminateTimerFinished();
+
+	/*
+		Dissolve effect
+	*/
+
+	UPROPERTY(VisibleAnywhere)
+	UTimelineComponent* DissolveTimeline;
+	FOnTimelineFloat DissolveTrack;
+
+	void StartDissolve();
+
+	UFUNCTION()
+	void UpdateDissolveMaterial(float DissolveValue);
+
+	UPROPERTY(EditAnywhere)
+	UCurveFloat* DissolveCurve;
+
+	//Dynamic instance that we can change at runtime
+	UPROPERTY(VisibleAnywhere, Category = Elimination)
+	UMaterialInstanceDynamic* DynamicDissolveMaterialInstance;
+
+	//MI set on the blueprint, used with the dynamic MI
+	UPROPERTY(EditAnywhere, Category = Elimination)
+	UMaterialInstance* DissolveMaterialInstance;
 
 public:	
 	void SetOverlappingWeapon(AWeapon* Weapon);
