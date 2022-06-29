@@ -95,8 +95,7 @@ private:
 	UAnimMontage* HitReactMontage;	
 
 	UPROPERTY(EditAnywhere, Category = Combat)
-	UAnimMontage* ElimMontage;	
-
+	UAnimMontage* ElimMontage;
 
 	void HideCharacterIfCameraClose();
 
@@ -124,9 +123,15 @@ private:
 	UFUNCTION()
 	void OnRep_Health();
 
+	UPROPERTY()
 	class ABlasterPlayerController* BlasterPlayerController;
 	
 	void UpdateHUDHealth();
+	
+	void PollInit();
+
+	UPROPERTY()
+	class ABlasterPlayerState* BlasterPlayerState;
 
 	bool bEliminated = false;
 
@@ -188,5 +193,8 @@ public:
 
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 	FORCEINLINE bool IsEliminated() const { return bEliminated; }
+
+	FORCEINLINE float GetHealth() const { return Health; }
+	FORCEINLINE float GetMaxHealth() const { return MaxHealth; }
 };
 

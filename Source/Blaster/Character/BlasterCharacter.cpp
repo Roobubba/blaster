@@ -18,6 +18,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundCue.h"
 #include "Particles/ParticleSystemComponent.h"
+#include "Blaster/PlayerState/BlasterPlayerState.h"
 
 ABlasterCharacter::ABlasterCharacter()
 {
@@ -120,6 +121,7 @@ void ABlasterCharacter::Tick(float DeltaTime)
 	}
 
 	HideCharacterIfCameraClose();
+	PollInit();
 }
 
 void ABlasterCharacter::Eliminate()
@@ -145,8 +147,6 @@ void ABlasterCharacter::EliminateTimerFinished()
 	{
 		BlasterGameMode->RequestRespawn(this, Controller);
 	}
-
-
 }
 
 void ABlasterCharacter::MulticastEliminate_Implementation()
@@ -537,8 +537,6 @@ void ABlasterCharacter::SimProxiesTurn()
 	ProxyRotation = GetActorRotation();
 	ProxyYaw = UKismetMathLibrary::NormalizedDeltaRotator(ProxyRotation, ProxyRotationLastFrame).Yaw;
 
-	//UE_LOG(LogTemp, Warning, TEXT("ProxyYaw: %f"), ProxyYaw);
-
 	if (FMath::Abs(ProxyYaw) > TurnThreshold)
 	{
 		if (ProxyYaw > 0.f)
@@ -627,6 +625,19 @@ void ABlasterCharacter::UpdateHUDHealth()
 	if (BlasterPlayerController)
 	{
 		BlasterPlayerController->SetHUDHealth(Health, MaxHealth);
+	}
+}
+
+void ABlasterCharacter::PollInit()
+{
+	if (BlasterPlayerState == nullptr)
+	{
+		BlasterPlayerState = GetPlayerState<ABlasterPlayerState>();
+		if (BlasterPlayerState)
+		{
+			BlasterPlayerState->AddToScore(0.f);
+			BlasterPlayerState->AddToDefeats(0);
+		}
 	}
 }
 
