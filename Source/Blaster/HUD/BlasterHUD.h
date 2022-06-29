@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/HUD.h"
+#include "Components/TimelineComponent.h"
 #include "BlasterHUD.generated.h"
 
 USTRUCT(BlueprintType)
@@ -31,7 +32,9 @@ class BLASTER_API ABlasterHUD : public AHUD
 	
 public:
 
+	ABlasterHUD();
 	virtual void DrawHUD() override;
+	void ShowElimMessage();
 
 	UPROPERTY(EditAnywhere, Category = "Player Stats")
 	TSubclassOf<class UUserWidget> CharacterOverlayClass;
@@ -51,6 +54,21 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	float CrosshairSpreadMax = 16.f;
+
+	UPROPERTY(VisibleAnywhere)
+	UTimelineComponent* ElimTextTimeline;
+	FOnTimelineFloat ElimTextTrack;
+
+	UFUNCTION()
+	void UpdateElimTextAlpha(float ElimTextAlpha);
+
+	UPROPERTY(EditAnywhere)
+	UCurveFloat* ElimTextCurve;
+
+	FTimerHandle ElimTextTimerHandle;
+
+	UFUNCTION()
+	void ElimTextTimerFinished();
 
 public:
 	FORCEINLINE void SetHUDPackage(const FHUDPackage& Package) { HUDPackage = Package; }

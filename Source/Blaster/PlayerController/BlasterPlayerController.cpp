@@ -61,15 +61,40 @@ void ABlasterPlayerController::SetHUDScore(float Score)
 
 void ABlasterPlayerController::SetHUDDefeats(int32 Defeats)
 {
-        BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
-        
-        bool bHUDValid = BlasterHUD && 
-        BlasterHUD->CharacterOverlay &&
-        BlasterHUD->CharacterOverlay->DefeatsAmount;
+    BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+    
+    bool bHUDValid = BlasterHUD && 
+    BlasterHUD->CharacterOverlay &&
+    BlasterHUD->CharacterOverlay->DefeatsAmount;
 
-        if (bHUDValid)
-        {
-            FString DefeatsString = FString::Printf(TEXT("%d"), Defeats);
-            BlasterHUD->CharacterOverlay->DefeatsAmount->SetText(FText::FromString(DefeatsString));
-        }
+    if (bHUDValid)
+    {
+        FString DefeatsString = FString::Printf(TEXT("%d"), Defeats);
+        BlasterHUD->CharacterOverlay->DefeatsAmount->SetText(FText::FromString(DefeatsString));
+    }
+}
+
+void ABlasterPlayerController::AnnounceElim()
+{
+    BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+
+    if (BlasterHUD)
+    {
+        BlasterHUD->ShowElimMessage();
+    }
+}
+
+void ABlasterPlayerController::SetHUDWeaponAmmo(int32 Ammo)
+{
+    BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+    
+    bool bHUDValid = BlasterHUD && 
+    BlasterHUD->CharacterOverlay &&
+    BlasterHUD->CharacterOverlay->WeaponAmmoAmount;
+
+    if (bHUDValid)
+    {
+        FString AmmoString = FString::Printf(TEXT("%d"), Ammo);
+        BlasterHUD->CharacterOverlay->WeaponAmmoAmount->SetText(FText::FromString(AmmoString));
+    }
 }

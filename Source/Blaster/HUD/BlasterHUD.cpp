@@ -3,6 +3,14 @@
 #include "BlasterHUD.h"
 #include "GameFramework/PlayerController.h"
 #include "CharacterOverlay.h"
+#include "Components/TextBlock.h"
+#include "TimerManager.h"
+
+ABlasterHUD::ABlasterHUD()
+{
+    ElimTextTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("TimelineComponent"));
+    ElimTextTrack.BindDynamic(this, &ABlasterHUD::UpdateElimTextAlpha);
+}
 
 void ABlasterHUD::BeginPlay()
 {
@@ -84,4 +92,44 @@ void ABlasterHUD::DrawCrosshair(UTexture2D* Texture, FVector2D ViewportCentre, F
         1.f,
         CrosshairColour
     );
+}
+
+void ABlasterHUD::ShowElimMessage()
+{
+    if (ElimTextTimeline && ElimTextCurve)
+    {
+        ElimTextTimeline->AddInterpFloat(ElimTextCurve, ElimTextTrack);
+        ElimTextTimeline->PlayFromStart();
+            
+        if (CharacterOverlay && CharacterOverlay->ElimText)
+        {
+            //CharacterOverlay->ElimText->SetVisibility(ESlateVisibility::Visible);
+            CharacterOverlay->ElimText->SetRenderOpacity(0.f);
+        }
+
+        float CurveTime = ElimTextTimeline->GetTimelineLength();
+        GetWorldTimerManager().SetTimer(
+            ElimTextTimerHandle,
+            this,
+            &ABlasterHUD::ElimTextTimerFinished,
+            CurveTime
+        );
+    }
+}
+
+void ABlasterHUD::UpdateElimTextAlpha(float ElimTextAlpha)
+{
+    if (CharacterOverlay && CharacterOverlay->ElimText)
+    {
+        CharacterOverlay->ElimText->SetRenderOpacity(ElimTextAlpha);
+    }
+}
+
+void ABlasterHUD::ElimTextTimerFinished()
+{
+    if (CharacterOverlay && CharacterOverlay->ElimText)
+    {
+        //CharacterOverlay->ElimText->SetVisibility(ESlateVisibility::Hidden);
+        CharacterOverlay->ElimText->SetRenderOpacity(0.f);
+    }
 }
