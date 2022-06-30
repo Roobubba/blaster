@@ -24,7 +24,8 @@ public:
 	virtual void OnPossess(APawn* InPawn) override;
 
 	void SetHUDWeaponAmmo(int32 Ammo);
-	
+	void SetHUDCarriedAmmo(int32 Ammo);
+
 protected:
 	virtual void BeginPlay() override;
 
