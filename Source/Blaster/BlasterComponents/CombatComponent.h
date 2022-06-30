@@ -53,6 +53,7 @@ protected:
 	void ServerReload();
 
 	void HandleReload();
+	int32 AmountToReload();
 
 	//UFUNCTION(NetMulticast, Reliable)
 	//void MulticastReload();
@@ -145,6 +146,8 @@ private:
 	UFUNCTION()
 	void OnRep_CombatState();
 
+	void UpdateAmmoValues();
+	
 public:	
 
 	

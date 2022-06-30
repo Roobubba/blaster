@@ -154,6 +154,8 @@ void ABlasterCharacter::MulticastEliminate_Implementation()
 {
 	if (BlasterPlayerController)
 	{
+		BlasterPlayerController->SetHUDWeaponType(EWeaponType::EWT_MAX);
+		BlasterPlayerController->SetHUDCarriedAmmo(0);
 		BlasterPlayerController->SetHUDWeaponAmmo(0);
 	}
 

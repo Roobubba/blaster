@@ -28,10 +28,13 @@ public:
 	virtual void OnRep_Owner() override;
 
 	void SetHUDAmmo();
+	void SetHUDWeaponType();
+	
 	void ShowPickupWidget(bool bShowWidget);
 	virtual void Fire(const FVector& HitTarget);
 
 	void Dropped();
+	void AddAmmo(int32 AmmoToAdd);
 	
 	/** 
 	* Textures for the Weapon crosshairs
@@ -68,6 +71,9 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	bool bAutomatic = true;
+
+	UPROPERTY(EditAnywhere)
+	class USoundCue* EquipSound;
 
 protected:
 	virtual void BeginPlay() override;
@@ -141,4 +147,6 @@ public:
 	FORCEINLINE bool GetIsAutomatic() const { return bAutomatic; }
 	FORCEINLINE bool GetIsEmpty() const { return Ammo <= 0; }
 	FORCEINLINE EWeaponType GetWeaponType() const { return WeaponType; }
+	FORCEINLINE int32 GetAmmo() const { return Ammo; }
+	FORCEINLINE int32 GetMagCapacity() const { return MagCapacity; }
 };
