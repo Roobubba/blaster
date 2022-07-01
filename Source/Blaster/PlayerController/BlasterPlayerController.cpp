@@ -55,11 +55,7 @@ void ABlasterPlayerController::ServerGetMatchState_Implementation()
     ABlasterGameMode* GameMode = Cast<ABlasterGameMode>(UGameplayStatics::GetGameMode(this));
     if (GameMode)
     {
-        WarmupTime = GameMode->WarmupTime;
-        MatchTime = GameMode->MatchTime;
-        LevelStartingTime = GameMode->LevelStartingTime;
-        MatchState = GameMode->GetMatchState();
-        ClientJoinMidgame(MatchState, WarmupTime, MatchTime, LevelStartingTime);
+        ClientJoinMidgame(GameMode->GetMatchState(), GameMode->WarmupTime, GameMode->MatchTime, GameMode->LevelStartingTime);
     }
 }
 
