@@ -5,6 +5,7 @@
 #include "CharacterOverlay.h"
 #include "Components/TextBlock.h"
 #include "TimerManager.h"
+#include "Announcement.h"
 
 ABlasterHUD::ABlasterHUD()
 {
@@ -20,13 +21,22 @@ void ABlasterHUD::BeginPlay()
 void ABlasterHUD::AddCharacterOverlay()
 {
     APlayerController* PlayerController = GetOwningPlayerController();
-    if (PlayerController)
+    if (PlayerController && CharacterOverlayClass)
     {
         CharacterOverlay = CreateWidget<UCharacterOverlay>(PlayerController, CharacterOverlayClass);
         CharacterOverlay->AddToViewport();
     }
 }
 
+void ABlasterHUD::AddAnnouncement()
+{
+    APlayerController* PlayerController = GetOwningPlayerController();
+    if (PlayerController && AnnouncementClass)
+    {
+        Announcement = CreateWidget<UAnnouncement>(PlayerController, AnnouncementClass);
+        Announcement->AddToViewport();
+    }
+}
 
 void ABlasterHUD::DrawHUD()
 {

@@ -9,12 +9,15 @@
 #include "Blaster/BlasterTypes/WeaponType.h"
 #include "Net/UnrealNetwork.h"
 #include "Blaster/GameMode/BlasterGameMode.h"
+#include "Blaster/HUD/Announcement.h"
+#include "Kismet/GameplayStatics.h"
 
 void ABlasterPlayerController::BeginPlay()
 {
     Super::BeginPlay();
 
     BlasterHUD = Cast<ABlasterHUD>(GetHUD());
+    ServerGetMatchState();
 }
 
 void ABlasterPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -44,6 +47,33 @@ void ABlasterPlayerController::CheckTimeSync(float DeltaTime)
             TimeSinceLastSync = 0.f;
             ServerRequestServerTime(GetWorld()->GetTimeSeconds());
         }
+    }
+}
+
+void ABlasterPlayerController::ServerGetMatchState_Implementation()
+{
+    ABlasterGameMode* GameMode = Cast<ABlasterGameMode>(UGameplayStatics::GetGameMode(this));
+    if (GameMode)
+    {
+        WarmupTime = GameMode->WarmupTime;
+        MatchTime = GameMode->MatchTime;
+        LevelStartingTime = GameMode->LevelStartingTime;
+        MatchState = GameMode->GetMatchState();
+        ClientJoinMidgame(MatchState, WarmupTime, MatchTime, LevelStartingTime);
+    }
+}
+
+void ABlasterPlayerController::ClientJoinMidgame_Implementation(FName StateOfMatch, float Warmup, float Match, float StartingTime)
+{
+    WarmupTime = Warmup;
+    MatchTime = Match;
+    LevelStartingTime = StartingTime;
+    MatchState = StateOfMatch;
+    OnMatchStateSet(MatchState);
+
+    if (BlasterHUD && MatchState == MatchState::WaitingToStart)
+    {
+        BlasterHUD->AddAnnouncement();
     }
 }
 
@@ -221,13 +251,48 @@ void ABlasterPlayerController::SetHUDMatchCountdown(float CountdownTime)
     }
 }
 
+void ABlasterPlayerController::SetHUDAnnouncementCountdown(float CountdownTime)
+{
+    BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+    
+    bool bHUDValid = BlasterHUD && 
+    BlasterHUD->Announcement &&
+    BlasterHUD->Announcement->WarmupTime;
+
+    if (bHUDValid)
+    {
+        int32 Minutes = FMath::FloorToInt(CountdownTime / 60.f);
+        int32 Seconds = CountdownTime - Minutes * 60;
+        FString TimeString = FString::Printf(TEXT("%02d:%02d"), Minutes, Seconds);
+        BlasterHUD->Announcement->WarmupTime->SetText(FText::FromString(TimeString));
+    }
+}
+
 void ABlasterPlayerController::SetHUDTime()
 {
-    uint32 SecondsLeft = FMath::CeilToInt(MatchTime - GetServerTime());
+    float TimeLeft;
+
+    if (MatchState == MatchState::WaitingToStart)
+    {
+        TimeLeft = WarmupTime - GetServerTime() + LevelStartingTime;
+    }
+    else if (MatchState == MatchState::InProgress)
+    {
+        TimeLeft = WarmupTime + MatchTime - GetServerTime() + LevelStartingTime;
+    }
+
+    uint32 SecondsLeft = FMath::CeilToInt(TimeLeft);
     
     if (CountdownInt != SecondsLeft)
     {
-            SetHUDMatchCountdown(MatchTime - GetServerTime());
+        if (MatchState == MatchState::WaitingToStart)
+        {
+            SetHUDAnnouncementCountdown(TimeLeft);
+        }
+        else if (MatchState == MatchState::InProgress)
+        {
+            SetHUDMatchCountdown(TimeLeft);
+        }
     }
 
     CountdownInt = SecondsLeft;
@@ -292,12 +357,7 @@ void ABlasterPlayerController::OnMatchStateSet(FName State)
 
     if (MatchState == MatchState::InProgress)
     {
-        BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
-
-        if (BlasterHUD)
-        {
-            BlasterHUD->AddCharacterOverlay();
-        }
+        HandleMatchHasStarted();
     }
 }
 
@@ -305,11 +365,20 @@ void ABlasterPlayerController::OnRep_MatchState()
 {
     if (MatchState == MatchState::InProgress)
     {
-        BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+        HandleMatchHasStarted();
+    }
+}
 
-        if (BlasterHUD)
+void ABlasterPlayerController::HandleMatchHasStarted()
+{
+    BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+
+    if (BlasterHUD)
+    {
+        BlasterHUD->AddCharacterOverlay();
+        if (BlasterHUD->Announcement)
         {
-            BlasterHUD->AddCharacterOverlay();
+            BlasterHUD->Announcement->SetVisibility(ESlateVisibility::Hidden);
         }
     }
 }
