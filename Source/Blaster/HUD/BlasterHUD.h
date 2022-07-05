@@ -13,13 +13,18 @@ struct FHUDPackage
 	GENERATED_BODY()
 
 public:
-	class UTexture2D* CrosshairsCentre;
-	UTexture2D* CrosshairsLeft;
-	UTexture2D* CrosshairsRight;
-	UTexture2D* CrosshairsTop;
-	UTexture2D* CrosshairsBottom;
-	float CrosshairSpread;
-	FLinearColor CrosshairsColour;
+	UPROPERTY()
+	class UTexture2D* CrosshairsCentre = nullptr;
+	UPROPERTY()
+	UTexture2D* CrosshairsLeft = nullptr;
+	UPROPERTY()
+	UTexture2D* CrosshairsRight = nullptr;
+	UPROPERTY()
+	UTexture2D* CrosshairsTop = nullptr;
+	UPROPERTY()
+	UTexture2D* CrosshairsBottom = nullptr;
+	float CrosshairSpread = 0.58f;
+	FLinearColor CrosshairsColour = FLinearColor::White;
 };
 
 /**
@@ -35,22 +40,6 @@ public:
 	ABlasterHUD();
 	virtual void DrawHUD() override;
 	void ShowElimMessage();
-
-	UPROPERTY(EditAnywhere, Category = "Player Stats")
-	TSubclassOf<class UUserWidget> CharacterOverlayClass;
-
-	UPROPERTY()
-	class UCharacterOverlay* CharacterOverlay;
-
-	void AddCharacterOverlay();
-
-	UPROPERTY(EditAnywhere, Category = "Announcements")
-	TSubclassOf<class UUserWidget> AnnouncementClass;
-
-	UPROPERTY()
-	class UAnnouncement* Announcement;
-
-	void AddAnnouncement();
 
 protected:
 
@@ -79,7 +68,24 @@ private:
 	UFUNCTION()
 	void ElimTextTimerFinished();
 
+	UPROPERTY(EditAnywhere, Category = "Player Stats")
+	TSubclassOf<class UUserWidget> CharacterOverlayClass;
+
+	UPROPERTY()
+	class UCharacterOverlay* CharacterOverlay = nullptr;
+
+	UPROPERTY(EditAnywhere, Category = "Announcements")
+	TSubclassOf<class UUserWidget> AnnouncementClass;
+
+	UPROPERTY()
+	class UAnnouncement* Announcement = nullptr;
+
+	void AddCharacterOverlay();
+	void AddAnnouncement();
+
 public:
 	FORCEINLINE void SetHUDPackage(const FHUDPackage& Package) { HUDPackage = Package; }
+	FORCEINLINE UAnnouncement* GetAnnouncement() const { return Announcement; }
+	FORCEINLINE UCharacterOverlay* GetCharacterOverlay() const { return CharacterOverlay; }
 
 };

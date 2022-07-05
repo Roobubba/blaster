@@ -54,7 +54,12 @@ void ABlasterGameMode::Tick(float DeltaTime)
         
         if (CountdownTime <= 0.f)
         {
-            RestartGame();
+            UWorld* World = GetWorld();
+            if (World)
+            {
+                bUseSeamlessTravel = true;
+                World->ServerTravel(FString("/Game/Maps/BlasterMap?listen"), true);
+            }
         }
     }
 }
@@ -63,6 +68,21 @@ void ABlasterGameMode::OnMatchStateSet()
 {
     Super::OnMatchStateSet();
 
+    if (MatchState == MatchState::WaitingToStart)
+    {
+        LevelStartingTime = GetWorld()->GetTimeSeconds();
+    }
+
+    APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
+    if (PlayerController)
+    {
+        ABlasterPlayerController* BlasterPlayer = Cast<ABlasterPlayerController>(PlayerController);
+        if (BlasterPlayer)
+        {
+            BlasterPlayer->ServerGetMatchState();
+        }
+    }
+    
     for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); Iterator; ++Iterator)
     {
         ABlasterPlayerController* BlasterPlayer = Cast<ABlasterPlayerController>(*Iterator);

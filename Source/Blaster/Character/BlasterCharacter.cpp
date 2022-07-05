@@ -60,6 +60,8 @@ ABlasterCharacter::ABlasterCharacter()
 
 void ABlasterCharacter::Destroyed()
 {
+	Super::Destroyed();
+	
 	if (ElimBotComponent)
 	{
 		ElimBotComponent->DestroyComponent();
@@ -72,8 +74,6 @@ void ABlasterCharacter::Destroyed()
 	{
 		Combat->EquippedWeapon->Destroy();
 	}
-
-	Super::Destroyed();
 }
 
 void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

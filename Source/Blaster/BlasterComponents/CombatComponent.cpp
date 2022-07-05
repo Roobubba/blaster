@@ -14,6 +14,8 @@
 #include "Camera/CameraComponent.h"
 #include "Engine/Scene.h"
 #include "TimerManager.h"
+#include "Blaster/GameState/BlasterGameState.h"
+#include "Blaster/GameMode/BlasterGameMode.h"
 
 UCombatComponent::UCombatComponent()
 {
@@ -50,6 +52,8 @@ void UCombatComponent::BeginPlay()
 			InitializeCarriedAmmo();
 		}
 	}
+
+	bDrawCrosshairs = true;
 }
 
 void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -98,7 +102,7 @@ void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
 
 	Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;
 
-	if (Controller)
+	if (Controller && Controller->GetMatchState() == MatchState::InProgress)
 	{
 		BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(Controller->GetHUD()) : BlasterHUD;
 
@@ -153,6 +157,34 @@ void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
 				CrosshairAimFactor +
 				CrosshairShootingFactor;
 
+			BlasterHUD->SetHUDPackage(HUDPackage);
+		}
+	}
+}
+
+void UCombatComponent::DisableCrosshairs()
+{
+	bDrawCrosshairs = false;
+	
+	if (Character == nullptr || Character->Controller == nullptr)
+	{
+		return;
+	}
+
+	Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;
+
+	if (Controller)
+	{
+		BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(Controller->GetHUD()) : BlasterHUD;
+
+		if (BlasterHUD)
+		{
+			HUDPackage.CrosshairsCentre = nullptr;
+			HUDPackage.CrosshairsLeft = nullptr;
+			HUDPackage.CrosshairsRight = nullptr;
+			HUDPackage.CrosshairsTop = nullptr;
+			HUDPackage.CrosshairsBottom = nullptr;
+			HUDPackage.CrosshairSpread = 0.58f;
 			BlasterHUD->SetHUDPackage(HUDPackage);
 		}
 	}
@@ -286,6 +318,13 @@ void UCombatComponent::UpdateAmmoValues()
 {
 	if (EquippedWeapon == nullptr)
 	{
+		if (Controller)
+		{
+			Controller->SetHUDCarriedAmmo(0);
+			Controller->SetHUDWeaponAmmo(0);
+			Controller->SetHUDWeaponType(EWeaponType::EWT_MAX);
+		}
+		
 		return;
 	}
 

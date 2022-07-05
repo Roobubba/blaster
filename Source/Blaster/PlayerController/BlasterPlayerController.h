@@ -40,6 +40,10 @@ public:
 	void OnMatchStateSet(FName State);
 	void HandleMatchHasStarted();
 	void HandleCooldown();
+	void HandleWaitingToStart();
+
+	UFUNCTION(Server, Reliable)
+	void ServerGetMatchState();
 
 protected:
 	virtual void BeginPlay() override;
@@ -67,9 +71,6 @@ protected:
 	float TimeSinceLastSync = 0.f;
 	void CheckTimeSync(float DeltaTime);
 
-	UFUNCTION(Server, Reliable)
-	void ServerGetMatchState();
-
 	UFUNCTION(Client, Reliable)
 	void ClientJoinMidgame(FName StateOfMatch, float Warmup, float Match, float Cooldown, float StartingTime);
 
@@ -93,9 +94,13 @@ private:
 	void OnRep_MatchState();
 
 	UPROPERTY()
-	class UCharacterOverlay* CharacterOverlay;
+	class UCharacterOverlay* CharacterOverlay = nullptr;
+
+	UPROPERTY()
+	class UAnnouncement* Announcement = nullptr;
 
 	bool bInitializeCharacterOverlay = false;
+	bool bInitializeAnnouncement = false;
 
 	float HUDHealth;
 	float HUDMaxHealth;
@@ -104,4 +109,7 @@ private:
 	int32 HUDAmmo;
 	int32 HUDCarriedAmmo;
 	EWeaponType HUDWeaponType;
+
+public:
+	FORCEINLINE FName GetMatchState() const { return MatchState; }
 };

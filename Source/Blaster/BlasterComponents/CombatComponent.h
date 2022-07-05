@@ -31,6 +31,10 @@ public:
 
 	void FireButtonPressed(bool bPressed);
 	
+	void DisableCrosshairs();
+	
+	void UpdateAmmoValues();
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -41,7 +45,6 @@ protected:
 
 	UFUNCTION()
 	void OnRep_EquippedWeapon();
-
 
 	void Fire();
 
@@ -148,7 +151,8 @@ private:
 	UFUNCTION()
 	void OnRep_CombatState();
 
-	void UpdateAmmoValues();
+
+	bool bDrawCrosshairs = true;
 	
 public:	
 

@@ -16,25 +16,40 @@ ABlasterHUD::ABlasterHUD()
 void ABlasterHUD::BeginPlay()
 {
     Super::BeginPlay();
+    AddCharacterOverlay();
+    AddAnnouncement();
 }
 
 void ABlasterHUD::AddCharacterOverlay()
 {
     APlayerController* PlayerController = GetOwningPlayerController();
-    if (PlayerController && CharacterOverlayClass)
+    if (PlayerController && CharacterOverlayClass && !CharacterOverlay)
     {
+        //if (CharacterOverlay)
+        //{
+        //    CharacterOverlay->RemoveFromViewport();
+        //}
+
         CharacterOverlay = CreateWidget<UCharacterOverlay>(PlayerController, CharacterOverlayClass);
         CharacterOverlay->AddToViewport();
+        CharacterOverlay->SetVisibility(ESlateVisibility::Hidden);
     }
 }
 
 void ABlasterHUD::AddAnnouncement()
 {
     APlayerController* PlayerController = GetOwningPlayerController();
-    if (PlayerController && AnnouncementClass)
+
+    if (PlayerController && AnnouncementClass && !Announcement)
     {
+        //if (Announcement)
+        //{
+        //    Announcement->RemoveFromViewport();
+        //}
+
         Announcement = CreateWidget<UAnnouncement>(PlayerController, AnnouncementClass);
         Announcement->AddToViewport();
+        Announcement->SetVisibility(ESlateVisibility::Hidden);
     }
 }
 

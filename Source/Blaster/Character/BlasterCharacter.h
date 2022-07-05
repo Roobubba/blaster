@@ -37,7 +37,8 @@ public:
 
 	UPROPERTY(Replicated)
 	bool bDisableGameplay = false;
-
+	void UpdateHUDHealth();
+	
 protected:
 	virtual void BeginPlay() override;
 
@@ -140,8 +141,7 @@ private:
 	UPROPERTY()
 	class ABlasterPlayerController* BlasterPlayerController;
 	
-	void UpdateHUDHealth();
-	
+
 	void PollInit();
 
 	UPROPERTY()
