@@ -28,6 +28,15 @@ protected:
 	UPROPERTY(EditAnywhere)
 	class UNiagaraSystem* TrailSystem;
 
+	UPROPERTY(EditAnywhere)
+	class USoundCue* ProjectileLoop;
+
+	UPROPERTY()
+	class UAudioComponent* ProjectileLoopComponent;
+
+	UPROPERTY(EditAnywhere)
+	class USoundAttenuation* ProjectileLoopAttentuation;
+
 private:
 
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))

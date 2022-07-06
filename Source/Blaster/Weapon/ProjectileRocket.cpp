@@ -5,6 +5,8 @@
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
 #include "Components/BoxComponent.h"
+#include "Sound/SoundCue.h"
+#include "Components/AudioComponent.h"
 
 AProjectileRocket::AProjectileRocket()
 {
@@ -33,6 +35,25 @@ void AProjectileRocket::BeginPlay()
             EAttachLocation::KeepWorldPosition,
             false
             );
+    }
+
+    if (ProjectileLoop && ProjectileLoopAttentuation)
+    {
+        ProjectileLoopComponent = UGameplayStatics::SpawnSoundAttached
+        (
+            ProjectileLoop,
+            GetRootComponent(),
+            FName(),
+            GetActorLocation(),
+            EAttachLocation::KeepWorldPosition,
+            false,
+            1.f,
+            1.f,
+            0.f,
+            ProjectileLoopAttentuation,
+            (USoundConcurrency*)nullptr,
+            false
+        );
     }
 }
 
@@ -79,6 +100,11 @@ void AProjectileRocket::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, 
     if (TrailSystemComponent && TrailSystemComponent->GetSystemInstance())
     {
         TrailSystemComponent->GetSystemInstance()->Deactivate();
+    }
+
+    if (ProjectileLoopComponent && ProjectileLoopComponent->IsPlaying())
+    {
+        ProjectileLoopComponent->Stop();
     }
 }
 
