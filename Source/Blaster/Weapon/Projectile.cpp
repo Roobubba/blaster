@@ -55,12 +55,13 @@ void AProjectile::BeginPlay()
 
 void AProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-	if (OtherComp->GetCollisionObjectType() == ECC_PhysicsMesh)
+	if (HasAuthority())
 	{
-		OtherComp->AddImpulseAtLocation(GetActorForwardVector() * PhysicsImpactForce, Hit.Location);
+		if (OtherComp->GetCollisionObjectType() == ECC_PhysicsMesh)
+		{
+			OtherComp->AddImpulseAtLocation(GetActorForwardVector() * PhysicsImpactForce, Hit.Location);
+		}
 	}
-
-	Destroy();
 }
 
 void AProjectile::Tick(float DeltaTime)
@@ -69,10 +70,8 @@ void AProjectile::Tick(float DeltaTime)
 
 }
 
-void AProjectile::Destroyed()
+void AProjectile::SpawnImpactEffects()
 {
-	Super::Destroyed();
-	
 	if (ImpactParticles)
 	{
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactParticles, GetActorTransform());
