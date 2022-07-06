@@ -16,7 +16,8 @@ AWeapon::AWeapon()
 {
 	PrimaryActorTick.bCanEverTick = false;
 	bReplicates = true;
-
+	SetReplicateMovement(true);
+	
 	WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh"));
 	SetRootComponent(WeaponMesh);
 
@@ -169,6 +170,7 @@ void AWeapon::Fire(const FVector& HitTarget)
 			}
 		}
 	}
+	
 	SpendRound();
 }
 
