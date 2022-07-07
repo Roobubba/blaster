@@ -53,15 +53,27 @@ void AHitScanWeapon::Fire(const FVector& HitTarget)
                 );
             }
 
+            TMap<ABlasterCharacter*, float> DamageMap;
             for (int i = 0; i < PelletCount; i++)
             {
-                HitScan(Start, HitTarget, InstigatorController);
+                HitScan(Start, HitTarget, InstigatorController, DamageMap);
+            }
+
+            if (HasAuthority() && InstigatorController)
+            {
+                for(auto DamageEvent : DamageMap)
+                {
+                    if (DamageEvent.Key)
+                    {
+                        UGameplayStatics::ApplyDamage(DamageEvent.Key, DamageEvent.Value, InstigatorController, this, UDamageType::StaticClass());
+                    }
+                }
             }
         }
     }
 }
 
-void AHitScanWeapon::HitScan(const FVector& TraceStart, const FVector& HitTarget, AController* InstigatorController)
+void AHitScanWeapon::HitScan(const FVector& TraceStart, const FVector& HitTarget, AController* InstigatorController, TMap<ABlasterCharacter*, float> &DamageMap)
 {
     FVector NewTraceDirection = UKismetMathLibrary::RandomUnitVectorInConeInDegrees((HitTarget - TraceStart).GetSafeNormal(), Spread);
     FVector End = TraceStart + (NewTraceDirection * UCombatComponent::GetTraceLength());
@@ -88,7 +100,14 @@ void AHitScanWeapon::HitScan(const FVector& TraceStart, const FVector& HitTarget
 
             if (BlasterCharacter && HasAuthority() && InstigatorController)
             {
-                UGameplayStatics::ApplyDamage(BlasterCharacter, Damage, InstigatorController, this, UDamageType::StaticClass());
+                if (DamageMap.Contains(BlasterCharacter))
+                {
+                    DamageMap[BlasterCharacter] += Damage;
+                }
+                else
+                {
+                    DamageMap.Emplace(BlasterCharacter, Damage);
+                }
             }
 
             if (ImpactParticles)
@@ -108,7 +127,9 @@ void AHitScanWeapon::HitScan(const FVector& TraceStart, const FVector& HitTarget
                 (
                     this,
                     HitSound,
-                    FireHit.ImpactPoint
+                    FireHit.ImpactPoint,
+                    0.5f,
+                    FMath::FRandRange(-0.5f, 0.5f)
                 );
             }
         }
