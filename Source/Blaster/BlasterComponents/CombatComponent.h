@@ -152,6 +152,9 @@ private:
 	UPROPERTY(EditAnywhere)
 	int32 StartingSMGAmmo = 20;
 
+	UPROPERTY(EditAnywhere)
+	int32 StartingShotgunAmmo = 8;
+
 	void InitializeCarriedAmmo();
 
 	UPROPERTY(ReplicatedUsing = OnRep_CombatState)
@@ -165,5 +168,6 @@ private:
 	
 public:	
 
+	FORCEINLINE static float GetTraceLength() { return TRACE_LENGTH; }
 	
 };

@@ -18,6 +18,16 @@ public:
 
 	virtual void Fire(const FVector& HitTarget) override;
 
+protected:
+
+	virtual void HitScan(const FVector& TraceStart, const FVector& HitTarget, AController* InstigatorController);
+
+	UPROPERTY(EditAnywhere)
+	int32 PelletCount = 1;
+
+	UPROPERTY(EditAnywhere)
+	float Spread = 0.f;
+
 private:
 	
 	UPROPERTY(EditAnywhere)
