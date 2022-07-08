@@ -28,6 +28,9 @@ protected:
 	UPROPERTY(EditAnywhere)
 	float Spread = 0.f;
 
+	UPROPERTY(EditAnywhere)
+	float PhysicsImpactForcePerPellet = 14000.f;
+	
 private:
 	
 	UPROPERTY(EditAnywhere)

@@ -8,6 +8,7 @@
 #include "Sound/SoundCue.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Blaster/BlasterComponents/CombatComponent.h"
+#include "Blaster/Blaster.h"
 
 void AHitScanWeapon::Fire(const FVector& HitTarget)
 {
@@ -96,18 +97,32 @@ void AHitScanWeapon::HitScan(const FVector& TraceStart, const FVector& HitTarget
         {
             BeamEnd = FireHit.ImpactPoint;
 
-            ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(FireHit.GetActor());
-
-            if (BlasterCharacter && HasAuthority() && InstigatorController)
+            if (HasAuthority() && InstigatorController)
             {
-                if (DamageMap.Contains(BlasterCharacter))
+                ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(FireHit.GetActor());
+                if (BlasterCharacter)
                 {
-                    DamageMap[BlasterCharacter] += Damage;
+                    if (DamageMap.Contains(BlasterCharacter))
+                    {
+                        DamageMap[BlasterCharacter] += Damage;
+                    }
+                    else
+                    {
+                        DamageMap.Emplace(BlasterCharacter, Damage);
+                    }
                 }
                 else
                 {
-                    DamageMap.Emplace(BlasterCharacter, Damage);
+                    TArray<UPrimitiveComponent*> PrimitiveComponents;
+                    FireHit.GetActor()->GetComponents(PrimitiveComponents, false);
+
+                    if (PrimitiveComponents.Num() > 0 && PrimitiveComponents[0]->GetCollisionObjectType() == ECC_PhysicsMesh)
+                    {
+                        UE_LOG(LogTemp, Warning, TEXT("Hit UPrimitiveComponent"));
+                        PrimitiveComponents[0]->AddImpulseAtLocation(NewTraceDirection * PhysicsImpactForcePerPellet, BeamEnd);
+                    }
                 }
+
             }
 
             if (ImpactParticles)
