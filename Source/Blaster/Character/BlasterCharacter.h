@@ -39,6 +39,9 @@ public:
 	bool bDisableGameplay = false;
 	void UpdateHUDHealth();
 	
+	UFUNCTION(BlueprintImplementableEvent)
+	void ShowSniperScopeWidget(bool ShowScope);
+
 protected:
 	virtual void BeginPlay() override;
 

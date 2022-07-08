@@ -192,11 +192,20 @@ void UCombatComponent::DisableCrosshairs()
 
 void UCombatComponent::SetAiming(bool bIsAiming)
 {
-	bAiming = bIsAiming;
-	ServerSetAiming(bIsAiming);
-	if (Character)
+	if (Character == nullptr || EquippedWeapon == nullptr)
 	{
-		Character->GetCharacterMovement()->MaxWalkSpeed = bIsAiming ? AimWalkSpeed : BaseWalkSpeed;
+		return;
+	}
+
+	bAiming = bIsAiming;
+	
+	ServerSetAiming(bIsAiming);
+
+	Character->GetCharacterMovement()->MaxWalkSpeed = bIsAiming ? AimWalkSpeed : BaseWalkSpeed;
+
+	if (Character->IsLocallyControlled() && EquippedWeapon->GetWeaponType() == EWeaponType::EWT_SniperRifle)
+	{
+		Character->ShowSniperScopeWidget(bIsAiming);
 	}
 }
 
