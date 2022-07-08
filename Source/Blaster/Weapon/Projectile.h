@@ -18,6 +18,10 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
+	virtual void StartDestroyTimer();
+
+	virtual void DestroyTimerFinished();
+
 	UFUNCTION()
 	virtual void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
@@ -33,6 +37,25 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	class UProjectileMovementComponent* ProjectileMovementComponent;
 
+	UPROPERTY(EditAnywhere)
+	class UNiagaraSystem* TrailSystem;
+
+	UPROPERTY()
+	class UNiagaraComponent* TrailSystemComponent;
+
+	void SpawnTrailSystem();
+
+	UPROPERTY(VisibleAnywhere)
+	UStaticMeshComponent* ProjectileMesh;
+
+	FTimerHandle DestroyTimer;
+
+	UPROPERTY(EditAnywhere)
+	float DestroyTime = 3.f;
+
+	UPROPERTY(EditAnywhere)
+	float PhysicsImpactForce = 1.f;
+
 private:
 
 	UPROPERTY(EditAnywhere)
@@ -40,9 +63,6 @@ private:
 
 	UPROPERTY()
 	class UParticleSystemComponent* TracerComponent;
-
-	UPROPERTY(EditAnywhere)
-	float PhysicsImpactForce = 1.f;
 
 	UPROPERTY(EditAnywhere)
 	UParticleSystem* ImpactParticles;

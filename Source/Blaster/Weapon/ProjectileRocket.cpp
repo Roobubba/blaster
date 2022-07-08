@@ -2,18 +2,18 @@
 
 #include "ProjectileRocket.h"
 #include "Kismet/GameplayStatics.h"
-#include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
 #include "Components/BoxComponent.h"
 #include "Sound/SoundCue.h"
 #include "Components/AudioComponent.h"
 #include "RocketMovementComponent.h"
+#include "Blaster/Blaster.h"
 
 AProjectileRocket::AProjectileRocket()
 {
-    RocketMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RocketMesh"));
-    RocketMesh->SetupAttachment(RootComponent);
-    RocketMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    ProjectileMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RocketMesh"));
+    ProjectileMesh->SetupAttachment(RootComponent);
+    ProjectileMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
     RocketMovementComponent = CreateDefaultSubobject<URocketMovementComponent>(TEXT("Rocket Movement Component"));
     RocketMovementComponent->bRotationFollowsVelocity = true;
@@ -29,18 +29,7 @@ void AProjectileRocket::BeginPlay()
 		CollisionBox->OnComponentHit.AddDynamic(this, &AProjectileRocket::OnHit);
 	}
 
-    if (TrailSystem)
-    {
-        TrailSystemComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(
-            TrailSystem,
-            GetRootComponent(),
-            FName(),
-            GetActorLocation(),
-            GetActorRotation(),
-            EAttachLocation::KeepWorldPosition,
-            false
-            );
-    }
+    SpawnTrailSystem();
 
     if (ProjectileLoop && ProjectileLoopAttentuation)
     {
@@ -93,14 +82,17 @@ void AProjectileRocket::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, 
         }
     }
 
-    GetWorldTimerManager().SetTimer(DestroyTimer, this, &AProjectileRocket::DestroyTimerFinished, DestroyTime);
-
-    Super::OnHit(HitComp, OtherActor, OtherComp, NormalImpulse, Hit);
     SpawnImpactEffects();
 
-    if (RocketMesh)
+    StartDestroyTimer();
+
+    Super::OnHit(HitComp, OtherActor, OtherComp, NormalImpulse, Hit);
+
+    ApplyPhysicsImpulses();
+
+    if (ProjectileMesh)
     {
-        RocketMesh->SetVisibility(false);
+        ProjectileMesh->SetVisibility(false);
     }
 
     if (CollisionBox)
@@ -108,9 +100,9 @@ void AProjectileRocket::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, 
         CollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     }
 
-    if (TrailSystemComponent && TrailSystemComponent->GetSystemInstance())
+    if (TrailSystemComponent && TrailSystemComponent->GetSystemInstanceController())
     {
-        TrailSystemComponent->GetSystemInstance()->Deactivate();
+        TrailSystemComponent->GetSystemInstanceController()->Deactivate();
     }
 
     if (ProjectileLoopComponent && ProjectileLoopComponent->IsPlaying())
@@ -119,7 +111,45 @@ void AProjectileRocket::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, 
     }
 }
 
-void AProjectileRocket::DestroyTimerFinished()
+void AProjectileRocket::ApplyPhysicsImpulses()
 {
-    Destroy();
+    if (HasAuthority())
+    {
+        TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
+        ObjectTypes.Add(TEnumAsByte(UEngineTypes::ConvertToObjectType(ECC_PhysicsMesh)));
+
+        UClass* ActorClassFilter = AActor::StaticClass();
+        
+        TArray<AActor*> IgnoreActors;
+        IgnoreActors.Init(this, 1);
+
+        TArray<AActor*> OutActors;
+        
+        bool HitActors = UKismetSystemLibrary::SphereOverlapActors
+        (
+            this,
+            GetActorLocation(),
+            OuterDamageRadius,
+            ObjectTypes,
+            ActorClassFilter,
+            IgnoreActors,
+            OutActors
+        );
+
+        if (HitActors)
+        {
+            for (AActor* HitActor : OutActors)
+            {
+                TArray<UPrimitiveComponent*> PrimitiveComponents;
+                HitActor->GetComponents(PrimitiveComponents, false);
+
+                if (PrimitiveComponents.Num() > 0 && PrimitiveComponents[0]->GetCollisionObjectType() == ECC_PhysicsMesh)
+                {
+                    FVector ImpulseDirection = HitActor->GetActorLocation() - GetActorLocation();
+                    float Force = 0.5f * PhysicsImpactForce * (1.f - FMath::Clamp((ImpulseDirection.Size() - InnerDamageRadius) / (2.f * OuterDamageRadius - InnerDamageRadius), 0.f, 1.f));
+                    PrimitiveComponents[0]->AddImpulse(ImpulseDirection.GetSafeNormal() * Force);
+                }
+            }
+        }
+    }
 }

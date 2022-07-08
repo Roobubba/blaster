@@ -118,7 +118,6 @@ void AHitScanWeapon::HitScan(const FVector& TraceStart, const FVector& HitTarget
 
                     if (PrimitiveComponents.Num() > 0 && PrimitiveComponents[0]->GetCollisionObjectType() == ECC_PhysicsMesh)
                     {
-                        UE_LOG(LogTemp, Warning, TEXT("Hit UPrimitiveComponent"));
                         PrimitiveComponents[0]->AddImpulseAtLocation(NewTraceDirection * PhysicsImpactForcePerPellet, BeamEnd);
                     }
                 }

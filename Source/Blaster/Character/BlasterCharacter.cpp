@@ -231,7 +231,7 @@ void ABlasterCharacter::MulticastEliminate_Implementation()
 		Combat->bAiming && 
 		Combat->EquippedWeapon && 
 		Combat->EquippedWeapon->GetWeaponType() == EWeaponType::EWT_SniperRifle;
-		
+
 	if (bHideSniperScope)
 	{
 		ShowSniperScopeWidget(false);
@@ -340,6 +340,9 @@ void ABlasterCharacter::PlayReloadMontage()
 				SectionName = FName("Rifle");
 				break;
 			case EWeaponType::EWT_Shotgun:
+				SectionName = FName("Rifle");
+				break;
+			case EWeaponType::EWT_GrenadeLauncher:
 				SectionName = FName("Rifle");
 				break;
 		}
