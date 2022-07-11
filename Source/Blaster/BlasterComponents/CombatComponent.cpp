@@ -39,6 +39,8 @@ void UCombatComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
+	CombatState = ECombatState::ECS_Unoccupied;
+
 	if (Character)
 	{
 		Character->GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
@@ -221,7 +223,7 @@ void UCombatComponent::ServerSetAiming_Implementation(bool bIsAiming)
 
 void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 {
-	if (Character == nullptr || WeaponToEquip == nullptr)
+	if (Character == nullptr || WeaponToEquip == nullptr || CombatState != ECombatState::ECS_Unoccupied)
 	{
 		return;
 	}
@@ -292,7 +294,7 @@ void UCombatComponent::OnRep_EquippedWeapon()
 
 void UCombatComponent::Reload()
 {
-	if (CarriedAmmo > 0 && CombatState != ECombatState::ECS_Reloading)
+	if (CarriedAmmo > 0 && CombatState == ECombatState::ECS_Unoccupied)
 	{
 		ServerReload();
 	}
@@ -413,6 +415,12 @@ void UCombatComponent::OnRep_CombatState()
 		case ECombatState::ECS_Reloading:
 			HandleReload();
 			break;
+		case ECombatState::ECS_ThrowingGrenade:
+			if (Character && !Character->IsLocallyControlled())
+			{
+				Character->PlayThrowGrenadeMontage();
+			}
+			break;
 	}
 }
 
@@ -519,6 +527,34 @@ void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& T
 		Character->PlayFireMontage(bAiming);
 		EquippedWeapon->Fire(TraceHitTarget);
 	}
+}
+
+void UCombatComponent::ThrowGrenade()
+{
+	CombatState = ECombatState::ECS_ThrowingGrenade;
+	if (Character)
+	{
+		Character->PlayThrowGrenadeMontage();
+	}
+	
+	if (Character && !Character->HasAuthority())
+	{
+		ServerThrowGrenade();
+	}
+}
+
+void UCombatComponent::ServerThrowGrenade_Implementation()
+{
+	CombatState = ECombatState::ECS_ThrowingGrenade;
+	if (Character)
+	{
+		Character->PlayThrowGrenadeMontage();
+	}
+}
+
+void UCombatComponent::ThrowGrenadeFinished()
+{
+	CombatState = ECombatState::ECS_Unoccupied;
 }
 
 void UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult)

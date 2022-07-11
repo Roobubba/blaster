@@ -29,6 +29,7 @@ public:
 	void PlayFireMontage(bool bAiming);
 	void PlayReloadMontage();
 	void PlayElimMontage();
+	void PlayThrowGrenadeMontage();
 	
 	void Eliminate();
 
@@ -56,6 +57,7 @@ protected:
 	void FireButtonPressed();
 	void FireButtonReleased();
 	void ReloadButtonPressed();
+	void GrenadeButtonPressed();
 
 	void AimOffset(float DeltaTime);
 	void CalculateAO_Pitch();
@@ -86,7 +88,7 @@ private:
 	void OnRep_OverlappingWeapon(AWeapon* LastWeapon);
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	class UCombatComponent* Combat;
+	class UCombatComponent* CombatComponent;
 
 	UFUNCTION(Server, Reliable)
 	void ServerEquipButtonPressed();
@@ -114,6 +116,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	UAnimMontage* ElimMontage;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	UAnimMontage* ThrowGrenadeMontage;
 
 	void HideCharacterIfCameraClose();
 
@@ -214,7 +219,7 @@ public:
 	FORCEINLINE float GetHealth() const { return Health; }
 	FORCEINLINE float GetMaxHealth() const { return MaxHealth; }
 	ECombatState GetCombatState() const;
-	FORCEINLINE UCombatComponent* GetCombat() const { return Combat; }
+	FORCEINLINE UCombatComponent* GetCombat() const { return CombatComponent; }
 	FORCEINLINE bool GetDisableGameplay() const { return bDisableGameplay; }
 	FORCEINLINE UAnimMontage* GetReloadAnimMontage() const { return ReloadMontage; }
 };
