@@ -75,6 +75,10 @@ public:
 	UPROPERTY(EditAnywhere)
 	class USoundCue* EquipSound;
 
+	// Toggle Custom Depth
+	void EnableCustomDepth(bool bEnable);
+
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -146,6 +150,7 @@ public:
 	FORCEINLINE float GetFireDelay() const { return FireDelay; }
 	FORCEINLINE bool GetIsAutomatic() const { return bAutomatic; }
 	FORCEINLINE bool GetIsEmpty() const { return Ammo <= 0; }
+	FORCEINLINE bool GetIsFull() const { return Ammo >= MagCapacity; }
 	FORCEINLINE EWeaponType GetWeaponType() const { return WeaponType; }
 	FORCEINLINE int32 GetAmmo() const { return Ammo; }
 	FORCEINLINE int32 GetMagCapacity() const { return MagCapacity; }
