@@ -55,6 +55,13 @@ protected:
 	UFUNCTION()
 	void OnRep_EquippedWeapon();
 
+	void DropEquippedWeapon();
+	void AttachActorToRightHand(AActor* ActorToAttach);
+	void AttachActorToLeftHand(AActor* ActorToAttach);
+	void UpdateCurrentAmmo();
+	void PlayEquipWeaponSound();
+	void ReloadEmptyWeapon();
+
 	void Fire();
 
 	UFUNCTION(Server, Reliable)
