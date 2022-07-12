@@ -44,6 +44,12 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ThrowGrenadeFinished();
 
+	UFUNCTION(BlueprintCallable)
+	void LaunchGrenade();
+
+	UFUNCTION(Server, Reliable)
+	void ServerLaunchGrenade(const FVector_NetQuantize& Target);
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -87,6 +93,9 @@ protected:
 	
 	UFUNCTION(Server, Reliable)
 	void ServerThrowGrenade();
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class AProjectile> GrenadeClass;
 
 private:
 	UPROPERTY()
@@ -192,6 +201,8 @@ private:
 
 
 	bool bDrawCrosshairs = true;
+
+	void ShowAttachedGrenade(bool bShowGrenade);
 	
 public:	
 
