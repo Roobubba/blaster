@@ -102,6 +102,10 @@ void ABlasterCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	UpdateHUDHealth();
+	if (CombatComponent)
+	{
+		CombatComponent->UpdateHUDGrenades();
+	}
 
 	FollowCamera->PostProcessSettings.bOverride_DepthOfFieldFocalDistance = 1;
 
@@ -279,6 +283,11 @@ void ABlasterCharacter::PostInitializeComponents()
 
 void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, class AController* InstigatorController, AActor* DamageCauser)
 {
+	if (bEliminated)
+	{
+		return;
+	}
+	
 	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
 
 	UpdateHUDHealth();

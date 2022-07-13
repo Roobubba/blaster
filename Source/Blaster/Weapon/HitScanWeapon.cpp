@@ -77,7 +77,7 @@ void AHitScanWeapon::Fire(const FVector& HitTarget)
 void AHitScanWeapon::HitScan(const FVector& TraceStart, const FVector& HitTarget, AController* InstigatorController, TMap<ABlasterCharacter*, float> &DamageMap)
 {
     FVector NewTraceDirection = UKismetMathLibrary::RandomUnitVectorInConeInDegrees((HitTarget - TraceStart).GetSafeNormal(), Spread);
-    FVector End = TraceStart + (NewTraceDirection * UCombatComponent::GetTraceLength());
+    FVector End = TraceStart + (NewTraceDirection * TRACE_LENGTH);
     FHitResult FireHit;
 
     UWorld* World = GetWorld();

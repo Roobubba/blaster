@@ -33,6 +33,7 @@ public:
 	void SetHUDWeaponType(EWeaponType WeaponType);
 	void SetHUDCarriedAmmo(int32 Ammo);
 	void SetHUDMatchCountdown(float CountdownTime);
+	void SetHUDGrenades(int32 Grenades);
 
 	void SetHUDAnnouncementCountdown(float CountdownTime);
 
@@ -99,8 +100,13 @@ private:
 	UPROPERTY()
 	class UAnnouncement* Announcement = nullptr;
 
-	bool bInitializeCharacterOverlay = false;
-	bool bInitializeAnnouncement = false;
+	bool bInitializeHUDHealth;
+	bool bInitializeHUDScore;
+	bool bInitializeHUDDefeats;
+	bool bInitializeHUDWeaponAmmo;
+	bool bInitializeHUDCarriedAmmo;
+	bool bInitializeHUDGrenades;
+	bool bInitializeHUDWeaponType;
 
 	float HUDHealth;
 	float HUDMaxHealth;
@@ -108,7 +114,8 @@ private:
 	int32 HUDDefeats;
 	int32 HUDAmmo;
 	int32 HUDCarriedAmmo;
-	EWeaponType HUDWeaponType;
+	int32 HUDGrenades = 4;
+	EWeaponType HUDWeaponType = EWeaponType::EWT_MAX;
 
 public:
 	FORCEINLINE FName GetMatchState() const { return MatchState; }

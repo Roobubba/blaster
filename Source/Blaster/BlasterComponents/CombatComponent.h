@@ -49,6 +49,8 @@ public:
 
 	UFUNCTION(Server, Reliable)
 	void ServerLaunchGrenade(const FVector_NetQuantize& Target);
+	
+	void UpdateHUDGrenades();
 
 protected:
 	virtual void BeginPlay() override;
@@ -165,6 +167,15 @@ private:
 	UPROPERTY(ReplicatedUsing = OnRep_CarriedAmmo)
 	int32 CarriedAmmo;
 
+	UPROPERTY(ReplicatedUsing = OnRep_Grenades)
+	int32 Grenades = 4;
+
+	UFUNCTION()
+	void OnRep_Grenades();
+
+	UPROPERTY(EditAnywhere)
+	int32 MaxGrenades = 4;
+
 	UFUNCTION()
 	void OnRep_CarriedAmmo();
 	
@@ -199,13 +210,12 @@ private:
 	UFUNCTION()
 	void OnRep_CombatState();
 
-
 	bool bDrawCrosshairs = true;
 
 	void ShowAttachedGrenade(bool bShowGrenade);
 	
 public:	
 
-	FORCEINLINE static float GetTraceLength() { return TRACE_LENGTH; }
+	FORCEINLINE int32 GetGrenades() const { return Grenades; }
 	
 };
