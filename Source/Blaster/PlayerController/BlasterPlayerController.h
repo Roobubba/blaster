@@ -112,8 +112,8 @@ private:
 	float HUDMaxHealth;
 	float HUDScore;
 	int32 HUDDefeats;
-	int32 HUDAmmo;
-	int32 HUDCarriedAmmo;
+	int32 HUDAmmo = 0;
+	int32 HUDCarriedAmmo = 0;
 	int32 HUDGrenades = 4;
 	EWeaponType HUDWeaponType = EWeaponType::EWT_MAX;
 

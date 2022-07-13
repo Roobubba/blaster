@@ -208,9 +208,9 @@ void AWeapon::Dropped()
 		BlasterOwnerController = BlasterOwnerController == nullptr ? Cast<ABlasterPlayerController>(BlasterOwnerCharacter->Controller) : BlasterOwnerController;
 		if (BlasterOwnerController)
 		{
+			BlasterOwnerController->SetHUDWeaponType(EWeaponType::EWT_MAX);
 			BlasterOwnerController->SetHUDWeaponAmmo(0);
 			BlasterOwnerController->SetHUDCarriedAmmo(0);
-			BlasterOwnerController->SetHUDWeaponType(EWeaponType::EWT_MAX);
 		}
 	}
 

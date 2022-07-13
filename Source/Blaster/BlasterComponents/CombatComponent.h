@@ -24,6 +24,7 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	void EquipWeapon(class AWeapon* WeaponToEquip);
+	void HandleRoundEnd();
 	void Reload();
 
 	UFUNCTION(BlueprintCallable)
@@ -52,10 +53,10 @@ public:
 	
 	void UpdateHUDGrenades();
 
+	void SetAiming(bool bIsAiming);
+
 protected:
 	virtual void BeginPlay() override;
-
-	void SetAiming(bool bIsAiming);
 
 	UFUNCTION(Server, Reliable)
 	void ServerSetAiming(bool bIsAiming);
@@ -165,7 +166,7 @@ private:
 
 	// Carried ammo for the currently equipped weapon
 	UPROPERTY(ReplicatedUsing = OnRep_CarriedAmmo)
-	int32 CarriedAmmo;
+	int32 CarriedAmmo = 0;
 
 	UPROPERTY(ReplicatedUsing = OnRep_Grenades)
 	int32 Grenades = 4;

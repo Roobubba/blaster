@@ -88,6 +88,11 @@ void ABlasterPlayerController::ClientJoinMidgame_Implementation(FName StateOfMat
             if (BlasterCharacter)
             {
                 BlasterCharacter->UpdateHUDHealth();
+                if (BlasterCharacter->GetCombat())
+                {
+                    BlasterCharacter->GetCombat()->UpdateHUDGrenades();
+                    BlasterCharacter->GetCombat()->UpdateAmmoValues();
+                }
             }
         }
     }  
@@ -106,6 +111,7 @@ void ABlasterPlayerController::OnPossess(APawn* InPawn)
         if (BlasterCharacter->GetCombat())
         {
             BlasterCharacter->GetCombat()->UpdateHUDGrenades();
+            BlasterCharacter->GetCombat()->UpdateAmmoValues();
         }
         
         //SetHUDCarriedAmmo(0); 
@@ -542,6 +548,24 @@ void ABlasterPlayerController::OnRep_MatchState()
     if (MatchState == MatchState::InProgress)
     {
         HandleMatchHasStarted();
+       
+        UWorld* World = GetWorld();
+        if (World)
+        {
+            if (GetCharacter())
+            {
+                ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(GetCharacter());
+                if (BlasterCharacter)
+                {
+                    BlasterCharacter->UpdateHUDHealth();
+                    if (BlasterCharacter->GetCombat())
+                    {
+                        BlasterCharacter->GetCombat()->UpdateHUDGrenades();
+                        BlasterCharacter->GetCombat()->UpdateAmmoValues();
+                    }
+                }
+            }
+        }
     }
     else if (MatchState == MatchState::Cooldown)
     {
@@ -667,5 +691,8 @@ void ABlasterPlayerController::HandleCooldown()
         BlasterCharacter->bDisableGameplay = true;
         BlasterCharacter->GetCombat()->FireButtonPressed(false);
         BlasterCharacter->GetCombat()->DisableCrosshairs();
+        BlasterCharacter->GetCombat()->SetAiming(false);
+        BlasterCharacter->GetCombat()->HandleRoundEnd();
+        //BlasterCharacter->ShowSniperScopeWidget(false);
     }
 }

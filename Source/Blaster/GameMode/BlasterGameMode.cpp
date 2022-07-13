@@ -73,22 +73,23 @@ void ABlasterGameMode::OnMatchStateSet()
         LevelStartingTime = GetWorld()->GetTimeSeconds();
     }
 
-    APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
-    if (PlayerController)
-    {
-        ABlasterPlayerController* BlasterPlayer = Cast<ABlasterPlayerController>(PlayerController);
-        if (BlasterPlayer)
-        {
-            BlasterPlayer->ServerGetMatchState();
-        }
-    }
+    //APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
+    //if (PlayerController)
+    //{
+    //    ABlasterPlayerController* BlasterPlayer = Cast<ABlasterPlayerController>(PlayerController);
+    //    if (BlasterPlayer)
+    //    {
+    //        BlasterPlayer->ServerGetMatchState();
+    //    }
+    //}
     
     for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); Iterator; ++Iterator)
     {
         ABlasterPlayerController* BlasterPlayer = Cast<ABlasterPlayerController>(*Iterator);
         if (BlasterPlayer)
         {
-            BlasterPlayer->OnMatchStateSet(MatchState);
+            BlasterPlayer->ServerGetMatchState();
+            //BlasterPlayer->OnMatchStateSet(MatchState);
         }
     }
 }

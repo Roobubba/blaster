@@ -42,6 +42,8 @@ void UCombatComponent::BeginPlay()
 	Super::BeginPlay();
 
 	CombatState = ECombatState::ECS_Unoccupied;
+	CarriedAmmo = 0;
+	Grenades = 4;
 
 	if (Character)
 	{
@@ -289,6 +291,16 @@ void UCombatComponent::UpdateCurrentAmmo()
 {
 	if (EquippedWeapon == nullptr)
 	{
+		Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;
+
+		if (Controller)
+		{
+			CarriedAmmo = 0;
+			Controller->SetHUDCarriedAmmo(0);
+			Controller->SetHUDWeaponAmmo(0);
+			Controller->SetHUDWeaponType(EWeaponType::EWT_MAX);
+		}
+
 		return;
 	}
 
@@ -371,8 +383,11 @@ void UCombatComponent::UpdateAmmoValues()
 {
 	if (EquippedWeapon == nullptr)
 	{
+		Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;
+
 		if (Controller)
 		{
+			CarriedAmmo = 0;
 			Controller->SetHUDCarriedAmmo(0);
 			Controller->SetHUDWeaponAmmo(0);
 			Controller->SetHUDWeaponType(EWeaponType::EWT_MAX);
@@ -409,6 +424,8 @@ void UCombatComponent::UpdateShotgunAmmoValues()
 		CarriedAmmoMap[EquippedWeapon->GetWeaponType()] -= 1;
 		CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
 	}
+
+	Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;
 
 	if (Controller)
 	{
@@ -605,6 +622,7 @@ void UCombatComponent::ThrowGrenade()
 void UCombatComponent::ServerThrowGrenade_Implementation()
 {
 	CombatState = ECombatState::ECS_ThrowingGrenade;
+
 	if (Character)
 	{
 		Character->PlayThrowGrenadeMontage();
@@ -774,5 +792,11 @@ void UCombatComponent::InitializeCarriedAmmo()
 	CarriedAmmoMap.Emplace(EWeaponType::EWT_Shotgun, StartingShotgunAmmo);
 	CarriedAmmoMap.Emplace(EWeaponType::EWT_SniperRifle, StartingSniperAmmo);
 	CarriedAmmoMap.Emplace(EWeaponType::EWT_GrenadeLauncher, StartingGrenadeLauncherAmmo);
+	CarriedAmmoMap.Emplace(EWeaponType::EWT_MAX, 0);
 
+}
+
+void UCombatComponent::HandleRoundEnd()
+{
+	EquippedWeapon = nullptr;
 }
