@@ -792,11 +792,22 @@ void UCombatComponent::InitializeCarriedAmmo()
 	CarriedAmmoMap.Emplace(EWeaponType::EWT_Shotgun, StartingShotgunAmmo);
 	CarriedAmmoMap.Emplace(EWeaponType::EWT_SniperRifle, StartingSniperAmmo);
 	CarriedAmmoMap.Emplace(EWeaponType::EWT_GrenadeLauncher, StartingGrenadeLauncherAmmo);
-	CarriedAmmoMap.Emplace(EWeaponType::EWT_MAX, 0);
-
 }
 
 void UCombatComponent::HandleRoundEnd()
 {
 	EquippedWeapon = nullptr;
+}
+
+void UCombatComponent::PickupAmmo(EWeaponType WeaponType, int32 AmmoAmount)
+{
+	if (CarriedAmmoMap.Contains(WeaponType))
+	{
+		CarriedAmmoMap[WeaponType] += AmmoAmount;
+		UpdateAmmoValues();
+		if (EquippedWeapon && EquippedWeapon->GetIsEmpty() && EquippedWeapon->GetWeaponType() == WeaponType)
+		{
+			Reload();
+		}
+	}
 }

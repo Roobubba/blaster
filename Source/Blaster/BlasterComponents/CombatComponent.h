@@ -55,6 +55,8 @@ public:
 
 	void SetAiming(bool bIsAiming);
 
+	void PickupAmmo(EWeaponType WeaponType, int32 AmmoAmount);
+
 protected:
 	virtual void BeginPlay() override;
 
