@@ -2,6 +2,7 @@
 
 
 #include "BuffComponent.h"
+#include "Blaster/Character/BlasterCharacter.h"
 
 UBuffComponent::UBuffComponent()
 {
@@ -19,5 +20,69 @@ void UBuffComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorC
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+	Heal(DeltaTime);
+}
+
+void UBuffComponent::Heal(float DeltaTime)
+{
+	if (Character && Character->HasAuthority() && !Character->IsEliminated() && HealingArray.Num() > 0)
+	{
+		float TotalAmountToHealThisFrame = 0.f;
+		float MaximumPossibleHealingThisFrame = Character->GetMaxHealth() - Character->GetHealth();
+		bool bHealMaxAndDestroyRemainingHealing = false;
+		for (Healing &CurrentHealing : HealingArray)
+		{
+			if (bHealMaxAndDestroyRemainingHealing)
+			{
+				break;
+			}
+			if (CurrentHealing.HealDelayRemaining > 0.f)
+			{
+				CurrentHealing.HealDelayRemaining -= DeltaTime;
+				continue;
+			}
+			else
+			{
+				float AmountToHealThisFrame = FMath::Min(CurrentHealing.TargetHealingRate * DeltaTime, CurrentHealing.HealAmountRemaining);
+				TotalAmountToHealThisFrame += AmountToHealThisFrame;
+				CurrentHealing.HealAmountRemaining -= AmountToHealThisFrame;
+				CurrentHealing.HealTimeRemaining -= DeltaTime;
+
+				if (TotalAmountToHealThisFrame >= MaximumPossibleHealingThisFrame)
+				{
+					bHealMaxAndDestroyRemainingHealing = true;
+				}
+			}
+		}
+
+		if (bHealMaxAndDestroyRemainingHealing)
+		{
+			Character->SetHealth(Character->GetMaxHealth());
+			Character->UpdateHUDHealth();
+			HealingArray.Empty();
+		}
+		else if (TotalAmountToHealThisFrame > 0.f)
+		{
+			Character->SetHealth(FMath::Min(Character->GetHealth() + TotalAmountToHealThisFrame, Character->GetMaxHealth()));
+			Character->UpdateHUDHealth();
+			HealingArray.RemoveAllSwap([](Healing &Val)
+			{
+				return Val.HealTimeRemaining <= 0.f || Val.HealAmountRemaining <= 0.f;
+			});
+		}
+	}
+}
+
+void UBuffComponent::AddNewHealing(float HealthAmount, float HealingDelay, float HealingTime)
+{
+	if (Character && Character->HasAuthority())
+	{
+		Healing HealingToAdd;
+		HealingToAdd.HealAmountRemaining = HealthAmount;
+		HealingToAdd.HealDelayRemaining = HealingDelay;
+		HealingToAdd.HealTimeRemaining = HealingTime;
+		HealingToAdd.TargetHealingRate = HealingTime > 0.f ? HealthAmount / HealingTime : 1000000.f;
+		HealingArray.Emplace(HealingToAdd);
+	}
 }
 

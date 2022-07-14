@@ -766,10 +766,10 @@ FVector ABlasterCharacter::GetHitTarget() const
 	return CombatComponent->HitTarget;
 }
 
-void ABlasterCharacter::OnRep_Health()
+void ABlasterCharacter::OnRep_Health(float LastHealth)
 {
 	UpdateHUDHealth();
-	if (!bEliminated)
+	if (!bEliminated && Health < LastHealth)
 	{
 		PlayHitReactMontage();
 	}
