@@ -64,6 +64,9 @@ ABlasterCharacter::ABlasterCharacter()
 	AttachedGrenade = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Attached Grenade"));
 	AttachedGrenade->SetupAttachment(GetMesh(), FName("GrenadeSocket"));
 	AttachedGrenade->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
+	GetCharacterMovement()->MaxWalkSpeedCrouched = CrouchWalkSpeed;
 }
 
 void ABlasterCharacter::PostInitializeComponents()
@@ -445,6 +448,21 @@ void ABlasterCharacter::ServerEquipButtonPressed_Implementation()
 	}
 }
 
+void ABlasterCharacter::UpdateMovementSpeed()
+{
+	float BuffMultiplier = 1.f;
+	if (BuffComponent)
+	{
+		BuffMultiplier = BuffComponent->GetSpeedMultiplier();
+	}
+	
+	if (GetMovementComponent())
+	{
+		GetCharacterMovement()->MaxWalkSpeed = IsAiming() ? BuffMultiplier * AimWalkSpeed : BuffMultiplier * BaseWalkSpeed;
+		GetCharacterMovement()->MaxWalkSpeedCrouched = BuffMultiplier * CrouchWalkSpeed;
+	}
+}
+
 void ABlasterCharacter::CrouchButtonPressed()
 {
 	if (bDisableGameplay) return;
@@ -605,17 +623,6 @@ void ABlasterCharacter::OnRep_OverlappingWeapon(AWeapon* LastWeapon)
 	{
 		LastWeapon->ShowPickupWidget(false);
 	}
-}
-
-
-bool ABlasterCharacter::IsWeaponEquipped()
-{
-	return (CombatComponent && CombatComponent->EquippedWeapon);
-}
-
-bool ABlasterCharacter::IsAiming()
-{
-	return (CombatComponent && CombatComponent->bAiming);
 }
 
 float ABlasterCharacter::CalculateSpeed()
@@ -833,4 +840,14 @@ ECombatState ABlasterCharacter::GetCombatState() const
 	}
 
 	return CombatComponent->CombatState;
+}
+
+bool ABlasterCharacter::IsWeaponEquipped() const
+{
+	return (CombatComponent && CombatComponent->EquippedWeapon);
+}
+
+bool ABlasterCharacter::IsAiming() const
+{
+	return (CombatComponent && CombatComponent->bAiming);
 }

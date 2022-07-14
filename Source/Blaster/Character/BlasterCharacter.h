@@ -43,6 +43,8 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void ShowSniperScopeWidget(bool ShowScope);
 
+	void UpdateMovementSpeed();
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -95,6 +97,15 @@ private:
 
 	UFUNCTION(Server, Reliable)
 	void ServerEquipButtonPressed();
+
+	UPROPERTY(EditAnywhere)
+	float BaseWalkSpeed = 600.f;
+
+	UPROPERTY(EditAnywhere)
+	float AimWalkSpeed = 350.f;
+
+	UPROPERTY(EditAnywhere)
+	float CrouchWalkSpeed = 250.f;
 
 	float AO_Yaw;
 	float InterpAO_Yaw;
@@ -152,7 +163,6 @@ private:
 	UPROPERTY()
 	class ABlasterPlayerController* BlasterPlayerController;
 	
-
 	void PollInit();
 
 	UPROPERTY()
@@ -209,8 +219,8 @@ private:
 
 public:	
 	void SetOverlappingWeapon(AWeapon* Weapon);
-	bool IsWeaponEquipped();
-	bool IsAiming();
+	bool IsWeaponEquipped() const;
+	bool IsAiming() const;
 	FORCEINLINE float GetAO_Yaw() const { return AO_Yaw; }
 	FORCEINLINE float GetAO_Pitch() const { return AO_Pitch; }
 	FORCEINLINE ETurningInPlace GetTurningInPlace() const { return TurningInPlace; }
@@ -231,7 +241,7 @@ public:
 	FORCEINLINE bool GetDisableGameplay() const { return bDisableGameplay; }
 	FORCEINLINE UAnimMontage* GetReloadAnimMontage() const { return ReloadMontage; }
 	FORCEINLINE UStaticMeshComponent* GetAttachedGrenade() const { return AttachedGrenade; }
-
+	FORCEINLINE float GetBaseWalkSpeed() const { return BaseWalkSpeed; }
 	FORCEINLINE void SetHealth(float Amount) { Health = Amount; }
 };
 

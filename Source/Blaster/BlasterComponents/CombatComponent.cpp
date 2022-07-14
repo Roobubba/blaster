@@ -22,8 +22,7 @@
 UCombatComponent::UCombatComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
-	BaseWalkSpeed = 600.f;
-	AimWalkSpeed = 350.f;
+
 }
 
 void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -44,10 +43,9 @@ void UCombatComponent::BeginPlay()
 	CombatState = ECombatState::ECS_Unoccupied;
 	CarriedAmmo = 0;
 	Grenades = 4;
-
+	
 	if (Character)
 	{
-		Character->GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
 		if (Character->GetFollowCamera())
 		{
 			DefaultFOV = Character->GetFollowCamera()->FieldOfView;
@@ -135,7 +133,7 @@ void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
 
 			FVector Velocity = Character->GetVelocity();
 			Velocity.Z = 0.f;
-			CrosshairVelocityFactor = Velocity.Size() / BaseWalkSpeed;
+			CrosshairVelocityFactor = Velocity.Size() / Character->GetBaseWalkSpeed();
 
 			if (Character->GetCharacterMovement()->IsFalling())
 			{
@@ -208,7 +206,7 @@ void UCombatComponent::SetAiming(bool bIsAiming)
 	
 	ServerSetAiming(bIsAiming);
 
-	Character->GetCharacterMovement()->MaxWalkSpeed = bIsAiming ? AimWalkSpeed : BaseWalkSpeed;
+	Character->UpdateMovementSpeed();
 
 	if (Character->IsLocallyControlled() && EquippedWeapon->GetWeaponType() == EWeaponType::EWT_SniperRifle)
 	{
@@ -221,7 +219,7 @@ void UCombatComponent::ServerSetAiming_Implementation(bool bIsAiming)
 	bAiming = bIsAiming;
 	if (Character)
 	{
-		Character->GetCharacterMovement()->MaxWalkSpeed = bIsAiming ? AimWalkSpeed : BaseWalkSpeed;
+		Character->UpdateMovementSpeed();
 	}
 }
 

@@ -26,12 +26,17 @@ public:
 	friend class ABlasterCharacter;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
 	void AddNewHealing(float HealthAmount, float HealingDelay, float HealingTime);
 	void UpdateHUDHealing();
 
+	void BuffSpeed(float BaseSpeedMultiplier, float SpeedBuffTime);
+	void ResetSpeed();
+
 protected:
 	virtual void BeginPlay() override;
-
+	void SetInitialCrouchSpeed(float Speed);
 	void Heal(float DeltaTime);
 
 private:
@@ -49,7 +54,14 @@ private:
 	UFUNCTION()
 	void OnRep_TargetHealingPercent();
 
+	FTimerHandle SpeedBuffTimer;
+	
+	float BaseSpeedMultiplier = 1.f;
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastSpeedBuff(float NewSpeedMultiplier);
+
 public:	
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	FORCEINLINE float GetSpeedMultiplier() const { return BaseSpeedMultiplier; }
 
 };

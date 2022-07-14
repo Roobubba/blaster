@@ -4,6 +4,7 @@
 #include "BuffComponent.h"
 #include "Blaster/Character/BlasterCharacter.h"
 #include "Blaster/PlayerController/BlasterPlayerController.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Net/UnrealNetwork.h"
 
 UBuffComponent::UBuffComponent()
@@ -24,7 +25,6 @@ void UBuffComponent::BeginPlay()
 	Super::BeginPlay();
 	
 }
-
 void UBuffComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
@@ -133,4 +133,51 @@ void UBuffComponent::AddNewHealing(float HealthAmount, float HealingDelay, float
 void UBuffComponent::OnRep_TargetHealingPercent()
 {
 	UpdateHUDHealing();
+}
+
+void UBuffComponent::BuffSpeed(float Multiplier, float SpeedBuffTime)
+{
+	if (Character)
+	{
+		Character->GetWorldTimerManager().SetTimer
+		(
+			SpeedBuffTimer,
+			this,
+			&UBuffComponent::ResetSpeed,
+			SpeedBuffTime
+		);
+
+
+			// PLAN:
+			/*
+				create public function on BlasterCharacter to set the walk/crouch speeds, and use the multiplier from here and the aiming bool from Combat to calculate the speeds when required.
+				Call that function from here when pickup/timer out, and from Combat when aiming changed, but only change the MovementComponent values from the one place
+			*/
+
+		BaseSpeedMultiplier = Multiplier;
+		//Character->UpdateMovementSpeed();
+		MulticastSpeedBuff(BaseSpeedMultiplier);
+	}
+}
+
+void UBuffComponent::ResetSpeed()
+{
+	BaseSpeedMultiplier = 1.f;
+
+	//if (Character)
+	//{
+	//	Character->UpdateMovementSpeed();
+	//}
+
+	MulticastSpeedBuff(BaseSpeedMultiplier);
+}
+
+void UBuffComponent::MulticastSpeedBuff_Implementation(float NewSpeedMultiplier)
+{
+	BaseSpeedMultiplier = NewSpeedMultiplier;
+	
+	if (Character)
+	{
+		Character->UpdateMovementSpeed();
+	}
 }
