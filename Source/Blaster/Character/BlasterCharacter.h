@@ -93,7 +93,6 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = Buff, meta = (AllowPrivateAccess = "true"))
 	class UBuffComponent* BuffComponent;
 
-
 	UFUNCTION(Server, Reliable)
 	void ServerEquipButtonPressed();
 

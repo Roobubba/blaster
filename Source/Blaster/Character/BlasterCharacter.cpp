@@ -314,6 +314,10 @@ void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const 
 	else
 	{
 		PlayHitReactMontage();
+		if (BuffComponent)
+		{
+			BuffComponent->UpdateHUDHealing();
+		}
 	}
 }
 
@@ -769,8 +773,14 @@ FVector ABlasterCharacter::GetHitTarget() const
 void ABlasterCharacter::OnRep_Health(float LastHealth)
 {
 	UpdateHUDHealth();
+
 	if (!bEliminated && Health < LastHealth)
 	{
+		if (BuffComponent)
+		{
+			BuffComponent->UpdateHUDHealing();
+		}	
+
 		PlayHitReactMontage();
 	}
 }

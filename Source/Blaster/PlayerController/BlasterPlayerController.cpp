@@ -12,6 +12,7 @@
 #include "Blaster/HUD/Announcement.h"
 #include "Kismet/GameplayStatics.h"
 #include "Blaster/BlasterComponents/CombatComponent.h"
+#include "Blaster/BlasterComponents/BuffComponent.h"
 #include "Blaster/GameState/BlasterGameState.h"
 #include "Blaster/PlayerState/BlasterPlayerState.h"
 #include "Styling/SlateColor.h"
@@ -93,6 +94,11 @@ void ABlasterPlayerController::ClientJoinMidgame_Implementation(FName StateOfMat
                     BlasterCharacter->GetCombat()->UpdateHUDGrenades();
                     BlasterCharacter->GetCombat()->UpdateAmmoValues();
                 }
+
+                if (BlasterCharacter->GetBuffComponent())
+                {
+                    BlasterCharacter->GetBuffComponent()->UpdateHUDHealing();
+                }
             }
         }
     }  
@@ -108,16 +114,39 @@ void ABlasterPlayerController::OnPossess(APawn* InPawn)
     if (BlasterCharacter)
     {
         SetHUDHealth(BlasterCharacter->GetHealth(), BlasterCharacter->GetMaxHealth());
+        
         if (BlasterCharacter->GetCombat())
         {
             BlasterCharacter->GetCombat()->UpdateHUDGrenades();
             BlasterCharacter->GetCombat()->UpdateAmmoValues();
         }
-        
+
+        if (BlasterCharacter->GetBuffComponent())
+        {
+            BlasterCharacter->GetBuffComponent()->UpdateHUDHealing();
+        }
         //SetHUDCarriedAmmo(0); 
         //SetHUDWeaponAmmo(0);
         //SetHUDWeaponType(EWeaponType::EWT_MAX);
         //SetHUDGrenades(4);
+    }
+}
+
+void ABlasterPlayerController::SetHUDHealthExtraHealing(float HealingPercent)
+{
+    BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+
+    if (BlasterHUD)
+    {
+        CharacterOverlay = CharacterOverlay == nullptr ? BlasterHUD->GetCharacterOverlay() : CharacterOverlay;
+
+        bool bHUDValid = CharacterOverlay &&
+            CharacterOverlay->HealthBarHealing;
+
+        if (bHUDValid)
+        {
+            CharacterOverlay->HealthBarHealing->SetPercent(HealingPercent);
+        }
     }
 }
 

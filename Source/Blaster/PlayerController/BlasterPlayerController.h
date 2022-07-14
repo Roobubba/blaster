@@ -22,6 +22,7 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	void SetHUDHealth(float Health, float MaxHealth);
+	void SetHUDHealthExtraHealing(float HealingPercent);
 	void SetHUDScore(float Score);
 	void SetHUDDefeats(int32 Defeats);
 
