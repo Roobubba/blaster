@@ -18,6 +18,8 @@ void UBuffComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(UBuffComponent, TargetHealingPercent);
+	DOREPLIFETIME(UBuffComponent, TargetShieldRegenPercent);
+	
 }
 
 void UBuffComponent::BeginPlay()
@@ -30,6 +32,7 @@ void UBuffComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorC
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	Heal(DeltaTime);
+	RegenShield(DeltaTime);
 }
 
 void UBuffComponent::UpdateHUDHealing()
@@ -135,6 +138,109 @@ void UBuffComponent::OnRep_TargetHealingPercent()
 	UpdateHUDHealing();
 }
 
+void UBuffComponent::UpdateHUDShieldRegen()
+{
+	if (Character)
+	{
+		if (Character->HasAuthority())
+		{
+			float TargetShield = Character->GetShield();
+
+			for (ShieldRegen &CurrentShield : ShieldRegenArray)
+			{
+				TargetShield += CurrentShield.ShieldRegenRemaining;
+			}
+
+			TargetShieldRegenPercent = TargetShield / Character->GetMaxShield();
+		}
+
+		Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;
+		if (Controller)
+		{
+			Controller->SetHUDShieldExtraRegen(TargetShieldRegenPercent);
+		}
+	}
+}
+
+void UBuffComponent::RegenShield(float DeltaTime)
+{
+	if (Character && !Character->IsEliminated() && ShieldRegenArray.Num() > 0)
+	{
+		float TotalQueuedShields = 0.f;
+		float TotalAmountToRegenThisFrame = 0.f;
+		float MaximumPossibleShieldRegenThisFrame = Character->GetMaxShield() - Character->GetShield();
+		bool bRegenMaxAndDestroyRemainingShieldRegens = false;
+		for (ShieldRegen &CurrentShield : ShieldRegenArray)
+		{
+			if (bRegenMaxAndDestroyRemainingShieldRegens)
+			{
+				break;
+			}
+
+			TotalQueuedShields += CurrentShield.ShieldRegenRemaining;
+
+			if (CurrentShield.ShieldRegenDelayRemaining > 0.f)
+			{
+				CurrentShield.ShieldRegenDelayRemaining -= DeltaTime;
+				continue;
+			}
+			else
+			{
+				float AmountToRegenThisFrame = FMath::Min(CurrentShield.TargetShieldRegenRate * DeltaTime, CurrentShield.ShieldRegenRemaining);
+				TotalAmountToRegenThisFrame += AmountToRegenThisFrame;
+				CurrentShield.ShieldRegenRemaining -= AmountToRegenThisFrame;
+				CurrentShield.ShieldRegenTimeRemaining -= DeltaTime;
+
+				if (TotalAmountToRegenThisFrame >= MaximumPossibleShieldRegenThisFrame)
+				{
+					bRegenMaxAndDestroyRemainingShieldRegens = true;
+				}
+			}
+		}
+
+		TargetShieldRegenPercent = (TotalQueuedShields + Character->GetShield()) / Character->GetMaxShield();
+
+		if (bRegenMaxAndDestroyRemainingShieldRegens)
+		{
+			Character->SetShield(Character->GetMaxShield());
+			Character->UpdateHUDShield();
+
+			ShieldRegenArray.Empty();
+		}
+		else if (TotalAmountToRegenThisFrame > 0.f)
+		{
+			Character->SetShield(FMath::Min(Character->GetShield() + TotalAmountToRegenThisFrame, Character->GetMaxShield()));
+			Character->UpdateHUDShield();
+			ShieldRegenArray.RemoveAllSwap([](ShieldRegen &Val)
+			{
+				return Val.ShieldRegenTimeRemaining <= 0.f || Val.ShieldRegenRemaining <= 0.f;
+			});
+		}
+
+		UpdateHUDShieldRegen();
+	}
+}
+
+void UBuffComponent::AddNewShield(float ShieldAmount, float ShieldRegenDelay, float ShieldRegenTime)
+{
+	if (Character)
+	{
+		ShieldRegen ShieldToAdd;
+		ShieldToAdd.ShieldRegenRemaining = ShieldAmount;
+		ShieldToAdd.ShieldRegenDelayRemaining = ShieldRegenDelay;
+		ShieldToAdd.ShieldRegenTimeRemaining = ShieldRegenTime;
+		ShieldToAdd.TargetShieldRegenRate = ShieldRegenTime > 0.f ? ShieldAmount / ShieldRegenTime : 1000000.f;
+		ShieldRegenArray.Emplace(ShieldToAdd);
+		
+		UpdateHUDShieldRegen();
+	}
+}
+
+void UBuffComponent::OnRep_TargetShieldRegenPercent()
+{
+	UpdateHUDShieldRegen();
+}
+
 void UBuffComponent::BuffSpeed(float Multiplier, float SpeedBuffTime)
 {
 	if (Character)
@@ -147,15 +253,8 @@ void UBuffComponent::BuffSpeed(float Multiplier, float SpeedBuffTime)
 			SpeedBuffTime
 		);
 
-
-			// PLAN:
-			/*
-				create public function on BlasterCharacter to set the walk/crouch speeds, and use the multiplier from here and the aiming bool from Combat to calculate the speeds when required.
-				Call that function from here when pickup/timer out, and from Combat when aiming changed, but only change the MovementComponent values from the one place
-			*/
-
 		BaseSpeedMultiplier = Multiplier;
-		//Character->UpdateMovementSpeed();
+
 		MulticastSpeedBuff(BaseSpeedMultiplier);
 	}
 }
@@ -163,11 +262,6 @@ void UBuffComponent::BuffSpeed(float Multiplier, float SpeedBuffTime)
 void UBuffComponent::ResetSpeed()
 {
 	BaseSpeedMultiplier = 1.f;
-
-	//if (Character)
-	//{
-	//	Character->UpdateMovementSpeed();
-	//}
 
 	MulticastSpeedBuff(BaseSpeedMultiplier);
 }
@@ -179,5 +273,51 @@ void UBuffComponent::MulticastSpeedBuff_Implementation(float NewSpeedMultiplier)
 	if (Character)
 	{
 		Character->UpdateMovementSpeed();
+	}
+}
+
+void UBuffComponent::BuffJump(float JumpMultiplier, float JumpBuffTime)
+{
+	if (Character)
+	{
+		Character->GetWorldTimerManager().SetTimer
+		(
+			JumpBuffTimer,
+			this,
+			&UBuffComponent::ResetJump,
+			JumpBuffTime
+		);
+
+		BaseJumpMultiplier = JumpMultiplier;
+
+		MulticastJumpBuff(BaseJumpMultiplier);
+		UpdateJumpVerticalVelocity();
+	}
+}
+
+void UBuffComponent::ResetJump()
+{
+	BaseJumpMultiplier = 1.f;
+	MulticastJumpBuff(BaseJumpMultiplier);
+	UpdateJumpVerticalVelocity();
+}
+
+void UBuffComponent::SetInitialJumpVerticalVelocity(float InitialJump)
+{
+	InitialJumpVerticalVelocity = InitialJump;
+}
+
+void UBuffComponent::MulticastJumpBuff_Implementation(float NewJumpMultiplier)
+{
+	BaseJumpMultiplier = NewJumpMultiplier;
+	
+	UpdateJumpVerticalVelocity();
+}
+
+void UBuffComponent::UpdateJumpVerticalVelocity()
+{
+	if (Character && Character->GetCharacterMovement())
+	{
+		Character->GetCharacterMovement()->JumpZVelocity = BaseJumpMultiplier * InitialJumpVerticalVelocity;
 	}
 }

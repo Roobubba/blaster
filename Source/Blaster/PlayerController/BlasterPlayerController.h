@@ -23,6 +23,10 @@ public:
 
 	void SetHUDHealth(float Health, float MaxHealth);
 	void SetHUDHealthExtraHealing(float HealingPercent);
+
+	void SetHUDShield(float Shield, float MaxShield);
+	void SetHUDShieldExtraRegen(float ShieldRegenPercent);
+
 	void SetHUDScore(float Score);
 	void SetHUDDefeats(int32 Defeats);
 
@@ -102,6 +106,7 @@ private:
 	class UAnnouncement* Announcement = nullptr;
 
 	bool bInitializeHUDHealth;
+	bool bInitializeHUDShield;	
 	bool bInitializeHUDScore;
 	bool bInitializeHUDDefeats;
 	bool bInitializeHUDWeaponAmmo;
@@ -111,6 +116,8 @@ private:
 
 	float HUDHealth;
 	float HUDMaxHealth;
+	float HUDShield;
+	float HUDMaxShield;
 	float HUDScore;
 	int32 HUDDefeats;
 	int32 HUDAmmo = 0;

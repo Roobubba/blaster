@@ -80,6 +80,10 @@ void ABlasterCharacter::PostInitializeComponents()
 	if (BuffComponent)
 	{
 		BuffComponent->Character = this;
+		if (GetCharacterMovement())
+		{
+			BuffComponent->SetInitialJumpVerticalVelocity(GetCharacterMovement()->JumpZVelocity);
+		}
 	}
 }
 
@@ -107,6 +111,7 @@ void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 
 	DOREPLIFETIME_CONDITION(ABlasterCharacter, OverlappingWeapon, COND_OwnerOnly);
 	DOREPLIFETIME(ABlasterCharacter, Health);
+	DOREPLIFETIME(ABlasterCharacter, Shield);
 	DOREPLIFETIME(ABlasterCharacter, bDisableGameplay);
 }
 
@@ -123,6 +128,7 @@ void ABlasterCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	UpdateHUDHealth();
+	UpdateHUDShield();
 	if (CombatComponent)
 	{
 		CombatComponent->UpdateHUDGrenades();
@@ -292,18 +298,37 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	PlayerInputComponent->BindAction("ThrowGrenade", IE_Pressed, this, &ABlasterCharacter::GrenadeButtonPressed);
 }
 
+void ABlasterCharacter::FellOutOfWorld(const UDamageType &dmgType)
+{
+	// Not calling Super, we will handle the death here manually
+
+	if (HasAuthority())
+	{
+		UGameplayStatics::ApplyDamage(this, 10000.f, Controller, this, UDamageType::StaticClass());
+	}
+}
+
 void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, class AController* InstigatorController, AActor* DamageCauser)
 {
-	if (bEliminated)
+	if (bEliminated || !GetWorld())
 	{
 		return;
 	}
 	
-	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
+	float DamageToHealth = FMath::Max(0.f, Damage - Shield);
+	Shield = FMath::Clamp(Shield - Damage, 0.f, MaxShield);	
+	Health = FMath::Clamp(Health - DamageToHealth, 0.f, MaxHealth);
 
 	UpdateHUDHealth();
+	UpdateHUDShield();
 	
-	if (Health <= 0.f && GetWorld())
+	if (BuffComponent)
+	{
+		BuffComponent->UpdateHUDHealing();
+		BuffComponent->UpdateHUDShieldRegen();
+	}
+
+	if (Health <= 0.f)
 	{
 		ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>();
 		if (BlasterGameMode)
@@ -317,10 +342,6 @@ void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const 
 	else
 	{
 		PlayHitReactMontage();
-		if (BuffComponent)
-		{
-			BuffComponent->UpdateHUDHealing();
-		}
 	}
 }
 
@@ -780,14 +801,13 @@ FVector ABlasterCharacter::GetHitTarget() const
 void ABlasterCharacter::OnRep_Health(float LastHealth)
 {
 	UpdateHUDHealth();
+	if (BuffComponent)
+	{
+		BuffComponent->UpdateHUDHealing();
+	}	
 
 	if (!bEliminated && Health < LastHealth)
 	{
-		if (BuffComponent)
-		{
-			BuffComponent->UpdateHUDHealing();
-		}	
-
 		PlayHitReactMontage();
 	}
 }
@@ -798,6 +818,29 @@ void ABlasterCharacter::UpdateHUDHealth()
 	if (BlasterPlayerController)
 	{
 		BlasterPlayerController->SetHUDHealth(Health, MaxHealth);
+	}
+}
+
+void ABlasterCharacter::OnRep_Shield(float LastShield)
+{
+	UpdateHUDShield();
+	if (BuffComponent)
+	{
+		BuffComponent->UpdateHUDShieldRegen();
+	}
+
+	if (!bEliminated && Shield < LastShield)
+	{
+		PlayHitReactMontage();
+	}
+}
+
+void ABlasterCharacter::UpdateHUDShield()
+{
+	BlasterPlayerController = BlasterPlayerController == nullptr ? Cast<ABlasterPlayerController>(Controller) : BlasterPlayerController;
+	if (BlasterPlayerController)
+	{
+		BlasterPlayerController->SetHUDShield(Shield, MaxShield);
 	}
 }
 

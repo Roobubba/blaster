@@ -23,7 +23,6 @@ void ABlasterPlayerController::BeginPlay()
 
     BlasterHUD = Cast<ABlasterHUD>(GetHUD());
     ServerGetMatchState();
-    UE_LOG(LogTemp, Warning, TEXT("BeginPlay called")); 
 }
 
 void ABlasterPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -73,12 +72,6 @@ void ABlasterPlayerController::ClientJoinMidgame_Implementation(FName StateOfMat
     MatchState = StateOfMatch;
     CooldownTime = Cooldown;
     OnMatchStateSet(MatchState);
-
-    //if (BlasterHUD && MatchState == MatchState::WaitingToStart)
-    //{
-    //    BlasterHUD->AddAnnouncement();
-    //}
-
     
     UWorld* World = GetWorld();
     if (World)
@@ -89,6 +82,8 @@ void ABlasterPlayerController::ClientJoinMidgame_Implementation(FName StateOfMat
             if (BlasterCharacter)
             {
                 BlasterCharacter->UpdateHUDHealth();
+                BlasterCharacter->UpdateHUDShield();
+
                 if (BlasterCharacter->GetCombat())
                 {
                     BlasterCharacter->GetCombat()->UpdateHUDGrenades();
@@ -98,6 +93,7 @@ void ABlasterPlayerController::ClientJoinMidgame_Implementation(FName StateOfMat
                 if (BlasterCharacter->GetBuffComponent())
                 {
                     BlasterCharacter->GetBuffComponent()->UpdateHUDHealing();
+                    BlasterCharacter->GetBuffComponent()->UpdateHUDShieldRegen();
                 }
             }
         }
@@ -114,7 +110,8 @@ void ABlasterPlayerController::OnPossess(APawn* InPawn)
     if (BlasterCharacter)
     {
         SetHUDHealth(BlasterCharacter->GetHealth(), BlasterCharacter->GetMaxHealth());
-        
+        SetHUDShield(BlasterCharacter->GetShield(), BlasterCharacter->GetMaxShield());
+
         if (BlasterCharacter->GetCombat())
         {
             BlasterCharacter->GetCombat()->UpdateHUDGrenades();
@@ -124,11 +121,8 @@ void ABlasterPlayerController::OnPossess(APawn* InPawn)
         if (BlasterCharacter->GetBuffComponent())
         {
             BlasterCharacter->GetBuffComponent()->UpdateHUDHealing();
+            BlasterCharacter->GetBuffComponent()->UpdateHUDShieldRegen();
         }
-        //SetHUDCarriedAmmo(0); 
-        //SetHUDWeaponAmmo(0);
-        //SetHUDWeaponType(EWeaponType::EWT_MAX);
-        //SetHUDGrenades(4);
     }
 }
 
@@ -180,6 +174,57 @@ void ABlasterPlayerController::SetHUDHealth(float Health, float MaxHealth)
         }
     }
 }
+
+void ABlasterPlayerController::SetHUDShield(float Shield, float MaxShield)
+{
+    BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+
+    if (BlasterHUD)
+    {
+        CharacterOverlay = CharacterOverlay == nullptr ? BlasterHUD->GetCharacterOverlay() : CharacterOverlay;
+
+        bool bHUDValid = CharacterOverlay &&
+            CharacterOverlay->ShieldBar &&
+            CharacterOverlay->ShieldText;
+
+        if (bHUDValid)
+        {
+            const float ShieldPercent = Shield / MaxShield;
+            CharacterOverlay->ShieldBar->SetPercent(ShieldPercent);
+            
+            FString ShieldString = FString::Printf(TEXT("%d/%d"), FMath::CeilToInt(Shield), FMath::CeilToInt(MaxShield));
+            CharacterOverlay->ShieldText->SetText(FText::FromString(ShieldString));
+            HUDShield = 100.f;
+            HUDMaxShield = 100.f;
+        }
+        else
+        {
+            bInitializeHUDShield = true;
+            HUDShield = Shield;
+            HUDMaxShield = Shield;
+        }
+    }
+}
+
+void ABlasterPlayerController::SetHUDShieldExtraRegen(float ShieldRegenPercent)
+{
+    BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+
+    if (BlasterHUD)
+    {
+        CharacterOverlay = CharacterOverlay == nullptr ? BlasterHUD->GetCharacterOverlay() : CharacterOverlay;
+
+        bool bHUDValid = CharacterOverlay &&
+            CharacterOverlay->ShieldBarRegen;
+
+        if (bHUDValid)
+        {
+            CharacterOverlay->ShieldBarRegen->SetPercent(ShieldRegenPercent);
+        }
+    }
+}
+
+
 
 void ABlasterPlayerController::SetHUDScore(float Score)
 {
@@ -486,7 +531,8 @@ void ABlasterPlayerController::PollInit()
             CharacterOverlay = CharacterOverlay == nullptr ? BlasterHUD->GetCharacterOverlay() : CharacterOverlay;
             if (CharacterOverlay)
             {
-                if (bInitializeHUDHealth) SetHUDHealth(HUDHealth, HUDMaxHealth);  
+                if (bInitializeHUDHealth) SetHUDHealth(HUDHealth, HUDMaxHealth);
+                if (bInitializeHUDShield) SetHUDShield(HUDShield, HUDMaxShield);  
                 if (bInitializeHUDScore) SetHUDScore(HUDScore);
                 if (bInitializeHUDDefeats) SetHUDDefeats(HUDDefeats);
                 if (bInitializeHUDWeaponType) SetHUDWeaponType(HUDWeaponType);
@@ -587,10 +633,18 @@ void ABlasterPlayerController::OnRep_MatchState()
                 if (BlasterCharacter)
                 {
                     BlasterCharacter->UpdateHUDHealth();
+                    BlasterCharacter->UpdateHUDShield();
+
                     if (BlasterCharacter->GetCombat())
                     {
                         BlasterCharacter->GetCombat()->UpdateHUDGrenades();
                         BlasterCharacter->GetCombat()->UpdateAmmoValues();
+                    }
+                    
+                    if (BlasterCharacter->GetBuffComponent())
+                    {
+                        BlasterCharacter->GetBuffComponent()->UpdateHUDHealing();
+                        BlasterCharacter->GetBuffComponent()->UpdateHUDShieldRegen();
                     }
                 }
             }
@@ -720,8 +774,9 @@ void ABlasterPlayerController::HandleCooldown()
         BlasterCharacter->bDisableGameplay = true;
         BlasterCharacter->GetCombat()->FireButtonPressed(false);
         BlasterCharacter->GetCombat()->DisableCrosshairs();
+        BlasterCharacter->ShowSniperScopeWidget(false);
         BlasterCharacter->GetCombat()->SetAiming(false);
         BlasterCharacter->GetCombat()->HandleRoundEnd();
-        //BlasterCharacter->ShowSniperScopeWidget(false);
+
     }
 }

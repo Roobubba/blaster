@@ -15,6 +15,15 @@ public:
 	float TargetHealingRate;
 };
 
+struct ShieldRegen
+{
+public:
+	float ShieldRegenRemaining;
+	float ShieldRegenDelayRemaining;
+	float ShieldRegenTimeRemaining;
+	float TargetShieldRegenRate;
+};
+
 UCLASS()
 class BLASTER_API UBuffComponent : public UActorComponent
 {
@@ -30,14 +39,21 @@ public:
 
 	void AddNewHealing(float HealthAmount, float HealingDelay, float HealingTime);
 	void UpdateHUDHealing();
+	void AddNewShield(float ShieldAmount, float ShieldRegenDelay, float ShieldRegenTime);
+	void UpdateHUDShieldRegen();
 
 	void BuffSpeed(float BaseSpeedMultiplier, float SpeedBuffTime);
 	void ResetSpeed();
+
+	void BuffJump(float JumpMultiplier, float JumpBuffTime);
+	void ResetJump();
+	void SetInitialJumpVerticalVelocity(float InitialJumpVerticalVelocity);
 
 protected:
 	virtual void BeginPlay() override;
 	void SetInitialCrouchSpeed(float Speed);
 	void Heal(float DeltaTime);
+	void RegenShield(float DeltaTime);
 
 private:
 	UPROPERTY()
@@ -45,6 +61,10 @@ private:
 
 	UPROPERTY()
 	class ABlasterPlayerController* Controller;
+
+	/*
+		Healing Buff
+	*/
 
 	TArray<Healing> HealingArray;
 
@@ -54,12 +74,41 @@ private:
 	UFUNCTION()
 	void OnRep_TargetHealingPercent();
 
+	/*
+		Shield Buff
+	*/
+
+	TArray<ShieldRegen> ShieldRegenArray;
+
+	UPROPERTY(ReplicatedUsing = OnRep_TargetShieldRegenPercent, VisibleAnywhere)
+	float TargetShieldRegenPercent = 0.f;
+
+	UFUNCTION()
+	void OnRep_TargetShieldRegenPercent();
+
+	/*
+		Speed Buff
+	*/
+
 	FTimerHandle SpeedBuffTimer;
 	
 	float BaseSpeedMultiplier = 1.f;
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastSpeedBuff(float NewSpeedMultiplier);
+
+	/*
+		Jump Buff
+	*/
+
+	FTimerHandle JumpBuffTimer;
+	float BaseJumpMultiplier = 1.f;
+	float InitialJumpVerticalVelocity;
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastJumpBuff(float NewJumpMultiplier);
+
+	void UpdateJumpVerticalVelocity();
 
 public:	
 	FORCEINLINE float GetSpeedMultiplier() const { return BaseSpeedMultiplier; }
