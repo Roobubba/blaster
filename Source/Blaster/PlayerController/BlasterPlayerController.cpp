@@ -16,6 +16,7 @@
 #include "Blaster/GameState/BlasterGameState.h"
 #include "Blaster/PlayerState/BlasterPlayerState.h"
 #include "Styling/SlateColor.h"
+#include "Camera/CameraComponent.h"
 
 void ABlasterPlayerController::BeginPlay()
 {
@@ -83,12 +84,7 @@ void ABlasterPlayerController::ClientJoinMidgame_Implementation(FName StateOfMat
             {
                 BlasterCharacter->UpdateHUDHealth();
                 BlasterCharacter->UpdateHUDShield();
-
-                if (BlasterCharacter->GetCombat())
-                {
-                    BlasterCharacter->GetCombat()->UpdateHUDGrenades();
-                    BlasterCharacter->GetCombat()->UpdateAmmoValues();
-                }
+                //BlasterCharacter->UpdateHUDAmmo();
 
                 if (BlasterCharacter->GetBuffComponent())
                 {
@@ -104,7 +100,7 @@ void ABlasterPlayerController::OnPossess(APawn* InPawn)
 {
     Super::OnPossess(InPawn);
 
-    // TODO: This is needed (I ThinK!) to make sure the server HUD updates!
+    // Ensure server HUD updates at start
 
     ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(InPawn);
     if (BlasterCharacter)
@@ -112,11 +108,7 @@ void ABlasterPlayerController::OnPossess(APawn* InPawn)
         SetHUDHealth(BlasterCharacter->GetHealth(), BlasterCharacter->GetMaxHealth());
         SetHUDShield(BlasterCharacter->GetShield(), BlasterCharacter->GetMaxShield());
 
-        if (BlasterCharacter->GetCombat())
-        {
-            BlasterCharacter->GetCombat()->UpdateHUDGrenades();
-            BlasterCharacter->GetCombat()->UpdateAmmoValues();
-        }
+        BlasterCharacter->UpdateHUDAmmo();
 
         if (BlasterCharacter->GetBuffComponent())
         {
@@ -634,13 +626,8 @@ void ABlasterPlayerController::OnRep_MatchState()
                 {
                     BlasterCharacter->UpdateHUDHealth();
                     BlasterCharacter->UpdateHUDShield();
+                    BlasterCharacter->UpdateHUDAmmo();
 
-                    if (BlasterCharacter->GetCombat())
-                    {
-                        BlasterCharacter->GetCombat()->UpdateHUDGrenades();
-                        BlasterCharacter->GetCombat()->UpdateAmmoValues();
-                    }
-                    
                     if (BlasterCharacter->GetBuffComponent())
                     {
                         BlasterCharacter->GetBuffComponent()->UpdateHUDHealing();
@@ -774,9 +761,17 @@ void ABlasterPlayerController::HandleCooldown()
         BlasterCharacter->bDisableGameplay = true;
         BlasterCharacter->GetCombat()->FireButtonPressed(false);
         BlasterCharacter->GetCombat()->DisableCrosshairs();
-        BlasterCharacter->ShowSniperScopeWidget(false);
-        BlasterCharacter->GetCombat()->SetAiming(false);
-        BlasterCharacter->GetCombat()->HandleRoundEnd();
+        
+        if (BlasterCharacter->IsAiming())
+        {
+            BlasterCharacter->GetCombat()->SetAiming(false);
 
+            if (BlasterCharacter->GetFollowCamera())
+            {
+                BlasterCharacter->GetFollowCamera()->SetFieldOfView(BlasterCharacter->GetCombat()->GetDefaultFOV());
+            }
+        }
+
+        BlasterCharacter->GetCombat()->HandleRoundEnd();
     }
 }

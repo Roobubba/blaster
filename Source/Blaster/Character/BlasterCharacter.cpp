@@ -127,8 +127,10 @@ void ABlasterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	SpawnDefaultWeapon();
 	UpdateHUDHealth();
 	UpdateHUDShield();
+	
 	if (CombatComponent)
 	{
 		CombatComponent->UpdateHUDGrenades();
@@ -190,7 +192,14 @@ void ABlasterCharacter::Eliminate()
 {
 	if (CombatComponent && CombatComponent->EquippedWeapon)
 	{
-		CombatComponent->EquippedWeapon->Dropped();
+		if (CombatComponent->EquippedWeapon->bDestroyWeapon)
+		{
+			CombatComponent->EquippedWeapon->Destroy();
+		}
+		else
+		{
+			CombatComponent->EquippedWeapon->Dropped();
+		}
 	}
 
 	MulticastEliminate();
@@ -450,14 +459,7 @@ void ABlasterCharacter::EquipButtonPressed()
 
 	if (CombatComponent)
 	{
-		if (HasAuthority())
-		{
-			CombatComponent->EquipWeapon(OverlappingWeapon);
-		}
-		else
-		{
-			ServerEquipButtonPressed();
-		}
+		ServerEquipButtonPressed();
 	}
 }
 
@@ -465,7 +467,14 @@ void ABlasterCharacter::ServerEquipButtonPressed_Implementation()
 {
 	if (CombatComponent)
 	{
-		CombatComponent->EquipWeapon(OverlappingWeapon);
+		if (OverlappingWeapon)
+		{
+			CombatComponent->EquipWeapon(OverlappingWeapon);
+		}
+		else if (CombatComponent->ShouldSwapWeapons())
+		{
+			CombatComponent->SwapWeapons();
+		}
 	}
 }
 
@@ -611,6 +620,24 @@ void ABlasterCharacter::HideCharacterIfCameraClose()
 		if (CombatComponent && CombatComponent->EquippedWeapon && CombatComponent->EquippedWeapon->GetWeaponMesh())
 		{
 			CombatComponent->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = false;
+		}
+	}
+}
+
+void ABlasterCharacter::SpawnDefaultWeapon()
+{
+	ABlasterGameMode* BlasterGameMode = Cast<ABlasterGameMode>(UGameplayStatics::GetGameMode(this));
+	if (BlasterGameMode)
+	{
+		UWorld* World = GetWorld();
+		if (World && !bEliminated && DefaultWeaponClass)
+		{
+			AWeapon* StartingWeapon = World->SpawnActor<AWeapon>(DefaultWeaponClass);
+			StartingWeapon->bDestroyWeapon = true;
+			if (CombatComponent)
+			{
+				CombatComponent->EquipWeapon(StartingWeapon);
+			}
 		}
 	}
 }
@@ -841,6 +868,18 @@ void ABlasterCharacter::UpdateHUDShield()
 	if (BlasterPlayerController)
 	{
 		BlasterPlayerController->SetHUDShield(Shield, MaxShield);
+	}
+}
+
+void ABlasterCharacter::UpdateHUDAmmo()
+{
+	BlasterPlayerController = BlasterPlayerController == nullptr ? Cast<ABlasterPlayerController>(Controller) : BlasterPlayerController;
+	if (BlasterPlayerController && CombatComponent && CombatComponent->EquippedWeapon)
+	{
+		BlasterPlayerController->SetHUDWeaponAmmo(CombatComponent->EquippedWeapon->GetAmmo());
+		BlasterPlayerController->SetHUDCarriedAmmo(CombatComponent->CarriedAmmo);
+		BlasterPlayerController->SetHUDGrenades(CombatComponent->GetGrenades());
+		BlasterPlayerController->SetHUDWeaponType(CombatComponent->EquippedWeapon->GetWeaponType());
 	}
 }
 

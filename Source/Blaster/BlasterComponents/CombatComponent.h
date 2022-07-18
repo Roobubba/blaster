@@ -24,6 +24,7 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	void EquipWeapon(class AWeapon* WeaponToEquip);
+	void SwapWeapons();
 	void HandleRoundEnd();
 	void Reload();
 
@@ -66,11 +67,14 @@ protected:
 	UFUNCTION()
 	void OnRep_EquippedWeapon();
 
+	UFUNCTION()
+	void OnRep_SecondaryWeapon();
+
 	void DropEquippedWeapon();
 	void AttachActorToRightHand(AActor* ActorToAttach);
 	void AttachActorToLeftHand(AActor* ActorToAttach);
-	void UpdateCurrentAmmo();
-	void PlayEquipWeaponSound();
+	void AttachActorToBackback(AActor* ActorToAttach);
+	void PlayEquipWeaponSound(AWeapon* Weapon);
 	void ReloadEmptyWeapon();
 
 	void Fire();
@@ -102,6 +106,9 @@ protected:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class AProjectile> GrenadeClass;
 
+	void EquipPrimaryWeapon(AWeapon* WeaponToEquip);
+	void EquipSecondaryWeapon(AWeapon* WeaponToEquip);
+
 private:
 	UPROPERTY()
 	class ABlasterCharacter* Character;
@@ -114,6 +121,9 @@ private:
 
 	UPROPERTY(ReplicatedUsing = OnRep_EquippedWeapon)
 	AWeapon* EquippedWeapon;
+
+	UPROPERTY(ReplicatedUsing = OnRep_SecondaryWeapon)
+	AWeapon* SecondaryWeapon;
 
 	UPROPERTY(Replicated)
 	bool bAiming;
@@ -214,5 +224,6 @@ private:
 public:	
 
 	FORCEINLINE int32 GetGrenades() const { return Grenades; }
-	
+	bool ShouldSwapWeapons();
+	FORCEINLINE float GetDefaultFOV() const { return DefaultFOV; }
 };

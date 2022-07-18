@@ -41,11 +41,14 @@ public:
 	bool bDisableGameplay = false;
 	void UpdateHUDHealth();
 	void UpdateHUDShield();
+	void UpdateHUDAmmo();
 	
 	UFUNCTION(BlueprintImplementableEvent)
 	void ShowSniperScopeWidget(bool ShowScope);
 
 	void UpdateMovementSpeed();
+
+	void SpawnDefaultWeapon();
 
 protected:
 	virtual void BeginPlay() override;
@@ -227,6 +230,9 @@ private:
 	// Grenade
 	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* AttachedGrenade;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<AWeapon> DefaultWeaponClass;
 
 public:	
 	void SetOverlappingWeapon(AWeapon* Weapon);

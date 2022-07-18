@@ -29,7 +29,8 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(UCombatComponent, EquippedWeapon);
+	DOREPLIFETIME(UCombatComponent, EquippedWeapon);	
+	DOREPLIFETIME(UCombatComponent, SecondaryWeapon);
 	DOREPLIFETIME(UCombatComponent, bAiming);
 	DOREPLIFETIME(UCombatComponent, CombatState);
 	DOREPLIFETIME_CONDITION(UCombatComponent, CarriedAmmo, COND_OwnerOnly);
@@ -40,9 +41,9 @@ void UCombatComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	CombatState = ECombatState::ECS_Unoccupied;
-	CarriedAmmo = 0;
-	Grenades = 4;
+	//CombatState = ECombatState::ECS_Unoccupied;
+	//CarriedAmmo = 0;
+	//Grenades = 4;
 	
 	if (Character)
 	{
@@ -230,6 +231,50 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 		return;
 	}
 
+	if (EquippedWeapon != nullptr && SecondaryWeapon == nullptr)
+	{
+		EquipSecondaryWeapon(WeaponToEquip);
+	}
+	else
+	{
+		EquipPrimaryWeapon(WeaponToEquip);
+	}
+
+	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
+	Character->bUseControllerRotationYaw = true;
+}
+
+void UCombatComponent::SwapWeapons()
+{
+	AWeapon* TempWeapon = EquippedWeapon;
+	EquippedWeapon = SecondaryWeapon;
+	SecondaryWeapon = TempWeapon;
+
+	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
+	AttachActorToRightHand(EquippedWeapon);
+	EquippedWeapon->SetHUDAmmo();
+	EquippedWeapon->SetHUDWeaponType();
+	UpdateAmmoValues();
+
+	SecondaryWeapon->SetWeaponState(EWeaponState::EWS_EquippedSecondary);
+	AttachActorToBackback(SecondaryWeapon);
+
+	PlayEquipWeaponSound(EquippedWeapon);
+	ReloadEmptyWeapon();
+}
+
+bool UCombatComponent::ShouldSwapWeapons()
+{
+	return EquippedWeapon && SecondaryWeapon;
+}
+
+void UCombatComponent::EquipPrimaryWeapon(AWeapon* WeaponToEquip)
+{
+	if (WeaponToEquip == nullptr)
+	{
+		return;
+	}
+
 	DropEquippedWeapon();
 	EquippedWeapon = WeaponToEquip;
 	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
@@ -237,18 +282,38 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	EquippedWeapon->SetOwner(Character);
 	EquippedWeapon->SetHUDAmmo();
 	EquippedWeapon->SetHUDWeaponType();
-	UpdateCurrentAmmo();
-	PlayEquipWeaponSound();
+	UpdateAmmoValues();
+	PlayEquipWeaponSound(EquippedWeapon);
 	ReloadEmptyWeapon();
-	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
-	Character->bUseControllerRotationYaw = true;
+	EquippedWeapon->EnableCustomDepth(false);
+}
+
+void UCombatComponent::EquipSecondaryWeapon(AWeapon* WeaponToEquip)
+{
+	if (WeaponToEquip == nullptr)
+	{
+		return;
+	}
+
+	SecondaryWeapon = WeaponToEquip;
+	SecondaryWeapon->SetWeaponState(EWeaponState::EWS_EquippedSecondary);
+	SecondaryWeapon->SetOwner(Character);
+	PlayEquipWeaponSound(SecondaryWeapon);
+	AttachActorToBackback(SecondaryWeapon);
 }
 
 void UCombatComponent::DropEquippedWeapon()
 {
 	if (EquippedWeapon)
 	{
-		EquippedWeapon->Dropped();
+		if (EquippedWeapon->bDestroyWeapon)
+		{
+			EquippedWeapon->Destroy();
+		}
+		else
+		{
+			EquippedWeapon->Dropped();
+		}
 	}
 }
 
@@ -285,41 +350,25 @@ void UCombatComponent::AttachActorToLeftHand(AActor* ActorToAttach)
 	}
 }
 
-void UCombatComponent::UpdateCurrentAmmo()
+void UCombatComponent::AttachActorToBackback(AActor* ActorToAttach)
 {
-	if (EquippedWeapon == nullptr)
+	if (Character == nullptr || Character->GetMesh() == nullptr || ActorToAttach == nullptr)
 	{
-		Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;
-
-		if (Controller)
-		{
-			CarriedAmmo = 0;
-			Controller->SetHUDCarriedAmmo(0);
-			Controller->SetHUDWeaponAmmo(0);
-			Controller->SetHUDWeaponType(EWeaponType::EWT_MAX);
-		}
-
 		return;
 	}
 
-	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType()))
+	const USkeletalMeshSocket* BackpackSocket = Character->GetMesh()->GetSocketByName(FName("BackpackSocket"));
+	if (BackpackSocket)
 	{
-		CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
-	}
-
-	Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;
-
-	if (Controller)
-	{
-		Controller->SetHUDCarriedAmmo(CarriedAmmo);
+		BackpackSocket->AttachActor(ActorToAttach, Character->GetMesh());
 	}
 }
 
-void UCombatComponent::PlayEquipWeaponSound()
+void UCombatComponent::PlayEquipWeaponSound(AWeapon* Weapon)
 {
-	if (Character && EquippedWeapon && EquippedWeapon->EquipSound)
+	if (Character && Weapon && Weapon->EquipSound)
 	{
-		UGameplayStatics::PlaySoundAtLocation(this, EquippedWeapon->EquipSound, Character->GetActorLocation());
+		UGameplayStatics::PlaySoundAtLocation(this, Weapon->EquipSound, Character->GetActorLocation());
 	}
 }
 
@@ -337,9 +386,20 @@ void UCombatComponent::OnRep_EquippedWeapon()
 	{
 		EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
 		AttachActorToRightHand(EquippedWeapon);
-		PlayEquipWeaponSound();
+		PlayEquipWeaponSound(EquippedWeapon);
 		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 		Character->bUseControllerRotationYaw = true;
+		UpdateAmmoValues();
+	}
+}
+
+void UCombatComponent::OnRep_SecondaryWeapon()
+{
+	if (SecondaryWeapon && Character)
+	{
+		SecondaryWeapon->SetWeaponState(EWeaponState::EWS_EquippedSecondary);
+		AttachActorToBackback(SecondaryWeapon);
+		PlayEquipWeaponSound(SecondaryWeapon);
 	}
 }
 
@@ -381,15 +441,15 @@ void UCombatComponent::UpdateAmmoValues()
 {
 	if (EquippedWeapon == nullptr)
 	{
-		Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;
-
-		if (Controller)
-		{
-			CarriedAmmo = 0;
-			Controller->SetHUDCarriedAmmo(0);
-			Controller->SetHUDWeaponAmmo(0);
-			Controller->SetHUDWeaponType(EWeaponType::EWT_MAX);
-		}
+		//Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;
+//
+		//if (Controller)
+		//{
+		//	CarriedAmmo = 0;
+		//	Controller->SetHUDCarriedAmmo(0);
+		//	Controller->SetHUDWeaponAmmo(0);
+		//	Controller->SetHUDWeaponType(EWeaponType::EWT_MAX);
+		//}
 		
 		return;
 	}
@@ -402,9 +462,12 @@ void UCombatComponent::UpdateAmmoValues()
 		CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
 	}
 
+	Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;
+	
 	if (Controller)
 	{
 		Controller->SetHUDCarriedAmmo(CarriedAmmo);
+		Controller->SetHUDWeaponType(EquippedWeapon->GetWeaponType());
 	}
 
 	EquippedWeapon->AddAmmo(ReloadAmount);
