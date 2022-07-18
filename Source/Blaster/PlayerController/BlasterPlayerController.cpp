@@ -772,6 +772,6 @@ void ABlasterPlayerController::HandleCooldown()
             }
         }
 
-        BlasterCharacter->GetCombat()->HandleRoundEnd();
+        //BlasterCharacter->GetCombat()->HandleRoundEnd();
     }
 }

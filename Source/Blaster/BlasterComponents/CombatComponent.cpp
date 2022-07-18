@@ -285,7 +285,6 @@ void UCombatComponent::EquipPrimaryWeapon(AWeapon* WeaponToEquip)
 	UpdateAmmoValues();
 	PlayEquipWeaponSound(EquippedWeapon);
 	ReloadEmptyWeapon();
-	EquippedWeapon->EnableCustomDepth(false);
 }
 
 void UCombatComponent::EquipSecondaryWeapon(AWeapon* WeaponToEquip)
@@ -296,8 +295,8 @@ void UCombatComponent::EquipSecondaryWeapon(AWeapon* WeaponToEquip)
 	}
 
 	SecondaryWeapon = WeaponToEquip;
-	SecondaryWeapon->SetWeaponState(EWeaponState::EWS_EquippedSecondary);
 	SecondaryWeapon->SetOwner(Character);
+	SecondaryWeapon->SetWeaponState(EWeaponState::EWS_EquippedSecondary);
 	PlayEquipWeaponSound(SecondaryWeapon);
 	AttachActorToBackback(SecondaryWeapon);
 }
@@ -871,4 +870,9 @@ void UCombatComponent::PickupAmmo(EWeaponType WeaponType, int32 AmmoAmount)
 			Reload();
 		}
 	}
+}
+
+void UCombatComponent::SetDamageMultiplier(float DamageMultiplier)
+{
+	
 }

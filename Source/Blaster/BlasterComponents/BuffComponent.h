@@ -49,6 +49,9 @@ public:
 	void ResetJump();
 	void SetInitialJumpVerticalVelocity(float InitialJumpVerticalVelocity);
 
+	void ApplyDamageBuff(float DamageBuffMultiplier, float BuffTime);
+	void ResetDamageBuff();
+
 protected:
 	virtual void BeginPlay() override;
 	void SetInitialCrouchSpeed(float Speed);
@@ -110,7 +113,18 @@ private:
 
 	void UpdateJumpVerticalVelocity();
 
+	/*
+		Damage Buff
+	*/
+
+	FTimerHandle DamageBuffTimer;
+	
+	float BaseDamageMultiplier = 1.f;
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastDamageBuff(float NewDamageMultiplier);
+	
 public:	
 	FORCEINLINE float GetSpeedMultiplier() const { return BaseSpeedMultiplier; }
-
+	FORCEINLINE float GetDamageMultiplier() const { return BaseDamageMultiplier; }
 };

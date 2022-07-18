@@ -20,7 +20,7 @@ public:
 
 protected:
 
-	virtual void HitScan(const FVector& TraceStart, const FVector& HitTarget, AController* InstigatorController, TMap<ABlasterCharacter*, float> &DamageMap);
+	virtual void HitScan(const FVector& TraceStart, const FVector& HitTarget, AController* InstigatorController, TMap<ABlasterCharacter*, float> &DamageMap, float DamageMultiplier);
 
 	UPROPERTY(EditAnywhere)
 	int32 PelletCount = 1;

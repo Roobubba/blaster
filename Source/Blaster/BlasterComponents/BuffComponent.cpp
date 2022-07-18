@@ -321,3 +321,33 @@ void UBuffComponent::UpdateJumpVerticalVelocity()
 		Character->GetCharacterMovement()->JumpZVelocity = BaseJumpMultiplier * InitialJumpVerticalVelocity;
 	}
 }
+
+void UBuffComponent::ApplyDamageBuff(float DamageBuffMultiplier, float BuffTime)
+{
+	if (Character)
+	{
+		Character->GetWorldTimerManager().SetTimer
+		(
+			DamageBuffTimer,
+			this,
+			&UBuffComponent::ResetDamageBuff,
+			BuffTime
+		);
+
+		BaseDamageMultiplier = DamageBuffMultiplier;
+
+		MulticastDamageBuff(BaseDamageMultiplier);
+	}
+}
+
+void UBuffComponent::ResetDamageBuff()
+{
+	BaseDamageMultiplier = 1.f;
+
+	MulticastSpeedBuff(BaseDamageMultiplier);
+}
+
+void UBuffComponent::MulticastDamageBuff_Implementation(float NewDamageMultiplier)
+{
+	BaseDamageMultiplier = NewDamageMultiplier;
+}

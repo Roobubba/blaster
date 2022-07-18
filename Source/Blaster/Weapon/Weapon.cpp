@@ -169,11 +169,11 @@ void AWeapon::OnDropped()
 
 void AWeapon::OnEquippedSecondary()
 {
-		if (AreaSphere)
+	if (AreaSphere)
 	{
 		AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
-	EnableCustomDepth(true);
+
 	ShowPickupWidget(false);
 
 	if (WeaponMesh == nullptr)
@@ -181,9 +181,19 @@ void AWeapon::OnEquippedSecondary()
 		return;
 	}
 	
-	WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_TAN);
-	WeaponMesh->MarkRenderStateDirty();
+	BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(GetOwner()) : BlasterOwnerCharacter;
+	if (BlasterOwnerCharacter)
+	{
+		if (BlasterOwnerCharacter->IsLocallyControlled())
+		{
+			WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_TAN);
+			WeaponMesh->MarkRenderStateDirty();
+			EnableCustomDepth(true);
+		}
+	}
+
 	WeaponMesh->SetSimulatePhysics(false);
+
 	if (WeaponType == EWeaponType::EWT_SubmachineGun)
 	{
 		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);

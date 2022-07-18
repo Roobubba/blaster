@@ -78,6 +78,9 @@ protected:
 	
 	void RotateInPlace(float DeltaTime);
 
+	void DropOrDestroyWeapon(AWeapon* Weapon);
+	void DropOrDestroyWeapons();
+
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera)
 	class USpringArmComponent* CameraBoom;
@@ -140,6 +143,7 @@ private:
 	UAnimMontage* ThrowGrenadeMontage;
 
 	void HideCharacterIfCameraClose();
+	void ToggleWeaponsIfCameraClose(bool bShowWeapons);
 
 	UPROPERTY(EditAnywhere)
 	float CameraHideCharacterThreshold = 200.f;

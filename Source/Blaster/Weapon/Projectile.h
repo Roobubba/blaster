@@ -15,6 +15,9 @@ public:
 	AProjectile();
 	virtual void Tick(float DeltaTime) override;
 
+	UPROPERTY(EditAnywhere)
+	float Damage = 20.f;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -27,9 +30,6 @@ protected:
 
 	UFUNCTION()
 	virtual void SpawnImpactEffects();
-
-	UPROPERTY(EditAnywhere)
-	float Damage = 20.f;
 
 	UPROPERTY(EditAnywhere)
 	class UBoxComponent* CollisionBox;

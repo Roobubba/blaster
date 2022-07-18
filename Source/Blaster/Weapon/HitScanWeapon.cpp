@@ -3,6 +3,7 @@
 #include "HitScanWeapon.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "Blaster/Character/BlasterCharacter.h"
+#include "Blaster/BlasterComponents/BuffComponent.h" 
 #include "Kismet/GameplayStatics.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "Sound/SoundCue.h"
@@ -54,10 +55,18 @@ void AHitScanWeapon::Fire(const FVector& HitTarget)
                 );
             }
 
+            float Multiplier = 1.f;
+
+            ABlasterCharacter* OwnerCharacter = Cast<ABlasterCharacter>(GetOwner());
+            if (OwnerCharacter && OwnerCharacter->GetBuffComponent())
+            {
+                Multiplier = FMath::Max(Multiplier, OwnerCharacter->GetBuffComponent()->GetDamageMultiplier());
+            }
+
             TMap<ABlasterCharacter*, float> DamageMap;
             for (int i = 0; i < PelletCount; i++)
             {
-                HitScan(Start, HitTarget, InstigatorController, DamageMap);
+                HitScan(Start, HitTarget, InstigatorController, DamageMap, Multiplier);
             }
 
             if (HasAuthority() && InstigatorController)
@@ -74,7 +83,7 @@ void AHitScanWeapon::Fire(const FVector& HitTarget)
     }
 }
 
-void AHitScanWeapon::HitScan(const FVector& TraceStart, const FVector& HitTarget, AController* InstigatorController, TMap<ABlasterCharacter*, float> &DamageMap)
+void AHitScanWeapon::HitScan(const FVector& TraceStart, const FVector& HitTarget, AController* InstigatorController, TMap<ABlasterCharacter*, float> &DamageMap, float DamageMultiplier)
 {
     FVector NewTraceDirection = UKismetMathLibrary::RandomUnitVectorInConeInDegrees((HitTarget - TraceStart).GetSafeNormal(), Spread);
     FVector End = TraceStart + (NewTraceDirection * TRACE_LENGTH);
@@ -104,11 +113,11 @@ void AHitScanWeapon::HitScan(const FVector& TraceStart, const FVector& HitTarget
                 {
                     if (DamageMap.Contains(BlasterCharacter))
                     {
-                        DamageMap[BlasterCharacter] += Damage;
+                        DamageMap[BlasterCharacter] += Damage * DamageMultiplier;
                     }
                     else
                     {
-                        DamageMap.Emplace(BlasterCharacter, Damage);
+                        DamageMap.Emplace(BlasterCharacter, Damage * DamageMultiplier);
                     }
                 }
                 else
@@ -118,7 +127,7 @@ void AHitScanWeapon::HitScan(const FVector& TraceStart, const FVector& HitTarget
 
                     if (PrimitiveComponents.Num() > 0 && PrimitiveComponents[0]->GetCollisionObjectType() == ECC_PhysicsMesh)
                     {
-                        PrimitiveComponents[0]->AddImpulseAtLocation(NewTraceDirection * PhysicsImpactForcePerPellet, BeamEnd);
+                        PrimitiveComponents[0]->AddImpulseAtLocation(NewTraceDirection * PhysicsImpactForcePerPellet * DamageMultiplier, BeamEnd);
                     }
                 }
 

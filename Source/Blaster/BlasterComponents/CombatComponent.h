@@ -58,6 +58,8 @@ public:
 
 	void PickupAmmo(EWeaponType WeaponType, int32 AmmoAmount);
 
+	void SetDamageMultiplier(float DamageMultiplier);
+	
 protected:
 	virtual void BeginPlay() override;
 

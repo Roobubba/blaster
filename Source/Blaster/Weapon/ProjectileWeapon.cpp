@@ -4,6 +4,8 @@
 #include "ProjectileWeapon.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "Projectile.h"
+#include "Blaster/Character/BlasterCharacter.h"
+#include "Blaster/BlasterComponents/BuffComponent.h"
 
 void AProjectileWeapon::Fire (const FVector& HitTarget)
 {
@@ -33,13 +35,25 @@ void AProjectileWeapon::Fire (const FVector& HitTarget)
             UWorld* World = GetWorld();
             if (World)
             {
-
-                World->SpawnActor<AProjectile>(
+                AProjectile* Projectile = World->SpawnActor<AProjectile>(
                     ProjectileClass,
                     SocketTransform.GetLocation(),
                     TargetRotation,
                     SpawnParams
                 );
+
+                ABlasterCharacter* Character = Cast<ABlasterCharacter>(GetOwner());
+                if (Character)
+                {
+                    if (Character->GetBuffComponent())
+                    {
+                        float Multiplier = 1.f;
+                        if (Character->GetBuffComponent()->GetDamageMultiplier() > 1.f)
+                        {
+                            Projectile->Damage *= Character->GetBuffComponent()->GetDamageMultiplier() > 1.f;
+                        }
+                    }
+                }
             }
         }
     }
