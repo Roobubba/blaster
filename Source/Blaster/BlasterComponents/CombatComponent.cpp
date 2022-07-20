@@ -591,12 +591,13 @@ void UCombatComponent::Fire()
 	{
 		bCanFire = false;
 
-		if (EquippedWeapon)
+		if (EquippedWeapon && Character)
 		{
 			if (!Character->HasAuthority())
 			{
 				LocalFire(HitTarget);
 			}
+			
 			ServerFire(HitTarget);
 
 			//switch(EquippedWeapon->FireType)
