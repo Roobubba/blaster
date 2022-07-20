@@ -38,15 +38,15 @@ void AProjectileBullet::Destroyed()
 {
     SpawnImpactEffects();
 
-    DrawDebugSphere
-    (
-        GetWorld(),
-        GetActorLocation(),
-        16.f,
-        12,
-        FColor::Orange,
-        true
-    );
+    //DrawDebugSphere
+    //(
+    //    GetWorld(),
+    //    GetActorLocation(),
+    //    16.f,
+    //    12,
+    //    FColor::Orange,
+    //    true
+    //);
 
     Super::Destroyed();
 }

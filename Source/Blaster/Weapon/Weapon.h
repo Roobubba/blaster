@@ -27,16 +27,6 @@ enum class EWeaponState : uint8
 	EWS_MAX UMETA(DisplayName = "DefaultMax")
 };
 
-UENUM(BlueprintType)
-enum class EFireType : uint8
-{
-	EFT_HitScanSingleShot UMETA(DisplayName = "Hit Scan Single Shot Weapon"),
-	EFT_HitScanMultiShot UMETA(DisplayName = "Hit Scan Multishot Weapon"),
-	EFT_Projectile UMETA(DisplayName = "Projectile Weapon"),
-
-	EFT_MAX UMETA(DisplayName = "DefaultMax")	
-};
-
 UCLASS()
 class BLASTER_API AWeapon : public AActor
 {
@@ -100,9 +90,6 @@ public:
 	void EnableCustomDepth(bool bEnable);
 
 	bool bDestroyWeapon = false;
-
-	UPROPERTY(EditAnywhere)
-	EFireType FireType;
 
 protected:
 	virtual void BeginPlay() override;

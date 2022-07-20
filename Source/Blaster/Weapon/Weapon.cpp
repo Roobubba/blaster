@@ -370,20 +370,20 @@ float AWeapon::HashFloatZeroToOne(const uint32 Input, const uint32 Seed)
 
 uint32 AWeapon::GenerateSeed(const FVector& Dir)
 {
-	FString NameServerClient = FString("Client ");
-	if (HasAuthority())
-	{
-		NameServerClient = FString("Server ");
-	}
-	
-	UE_LOG(LogTemp, Warning, TEXT("%sDir values: %f, %f, %f"), *NameServerClient, Dir.X, Dir.Y, Dir.Z);
+	//FString NameServerClient = FString("Client ");
+	//if (HasAuthority())
+	//{
+	//	NameServerClient = FString("Server ");
+	//}
+	//
+	//UE_LOG(LogTemp, Warning, TEXT("%sDir values: %f, %f, %f"), *NameServerClient, Dir.X, Dir.Y, Dir.Z);
 
-	const uint32 ModifiedX = (uint32)FMath::RoundToInt32((Dir.X + 2.f) * 4);
-	const uint32 ModifiedY = (uint32)FMath::RoundToInt32((Dir.Y + 2.f) * 4);
-	const uint32 ModifiedZ = (uint32)FMath::RoundToInt32((Dir.Z + 2.f) * 4);
+	const uint32 ModifiedX = (uint32)FMath::RoundToInt32((Dir.X + 1.f) * 8);
+	const uint32 ModifiedY = (uint32)FMath::RoundToInt32((Dir.Y + 1.f) * 8);
+	const uint32 ModifiedZ = (uint32)FMath::RoundToInt32((Dir.Z + 1.f) * 8);
 
-	UE_LOG(LogTemp, Warning, TEXT("%sModified values: %d, %d, %d"), *NameServerClient, ModifiedX, ModifiedY, ModifiedZ);
-	
+	//UE_LOG(LogTemp, Warning, TEXT("%sModified values: %d, %d, %d"), *NameServerClient, ModifiedX, ModifiedY, ModifiedZ);
+
 	uint32 Seed = Ammo + (ModifiedX * 10000) + (ModifiedY * 1000) + (ModifiedZ * 100);
 	return Seed;
 }

@@ -11,7 +11,7 @@
 #include "Blaster/BlasterComponents/CombatComponent.h"
 #include "Blaster/Blaster.h"
 
-#include "DrawDebugHelpers.h"
+//#include "DrawDebugHelpers.h"
 
 void AHitScanWeapon::Fire(const FVector& HitTarget)
 {
@@ -108,15 +108,15 @@ void AHitScanWeapon::HitScan(const FVector& TraceStart, const FVector& HitTarget
         {
             BeamEnd = FireHit.ImpactPoint;
 
-            DrawDebugSphere
-            (
-                World,
-                BeamEnd,
-                16.f,
-                12,
-                FColor::Orange,
-                true
-            );
+            //DrawDebugSphere
+            //(
+            //    World,
+            //    BeamEnd,
+            //    16.f,
+            //    12,
+            //    FColor::Orange,
+            //    true
+            //);
 
             if (HasAuthority() && InstigatorController)
             {
