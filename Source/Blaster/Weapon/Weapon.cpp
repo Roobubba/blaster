@@ -49,13 +49,10 @@ void AWeapon::BeginPlay()
 		PickupWidget->SetVisibility(false);
 	}
 
-	if (HasAuthority())
-	{
-		AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-		AreaSphere->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
-		AreaSphere->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnSphereOverlap);
-		AreaSphere->OnComponentEndOverlap.AddDynamic(this, &AWeapon::OnSphereEndOverlap);
-	}
+	AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	AreaSphere->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
+	AreaSphere->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnSphereOverlap);
+	AreaSphere->OnComponentEndOverlap.AddDynamic(this, &AWeapon::OnSphereEndOverlap);
 }
 
 void AWeapon::Tick(float DeltaTime)
@@ -244,8 +241,11 @@ void AWeapon::Fire(const FVector& HitTarget)
 			}
 		}
 	}
-	
-	SpendRound();
+
+	if (HasAuthority())
+	{
+		SpendRound();
+	}
 }
 
 void AWeapon::Dropped()
@@ -346,5 +346,83 @@ void AWeapon::EnableCustomDepth(bool bEnable)
 	if (WeaponMesh)
 	{
 		WeaponMesh->SetRenderCustomDepth(bEnable);
+	}
+}
+
+uint32 AWeapon::Hash(const uint32 Input, const uint32 Seed)
+{
+    uint32 Mangled = Input;
+    Mangled *= NOISE_A;
+    Mangled += Seed;
+    Mangled ^= (Mangled >> 8);
+    Mangled += NOISE_B;
+    Mangled ^= (Mangled << 8);
+    Mangled *= NOISE_C;
+    Mangled ^= (Mangled >> 8);
+
+    return Mangled;
+}
+
+float AWeapon::HashFloatZeroToOne(const uint32 Input, const uint32 Seed)
+{
+    return (float) ((int) AWeapon::Hash(Input, Seed) * RANDOM_TO_FLOAT) + 0.5f;
+}
+
+uint32 AWeapon::GenerateSeed(const FVector& Dir)
+{
+	//FString NameServerClient = FString("Client ");
+	//if (HasAuthority())
+	//{
+	//	NameServerClient = FString("Server ");
+	//}
+	//
+	//UE_LOG(LogTemp, Warning, TEXT("%sDir values: %f, %f, %f"), *NameServerClient, Dir.X, Dir.Y, Dir.Z);
+
+	uint32 ModifiedX = (uint32)FMath::RoundToInt32((Dir.X + 2.f) * 4);
+	uint32 ModifiedY = (uint32)FMath::RoundToInt32((Dir.Y + 2.f) * 4);
+	uint32 ModifiedZ = (uint32)FMath::RoundToInt32((Dir.Z + 2.f) * 4);
+
+	//UE_LOG(LogTemp, Warning, TEXT("%sModified values: %d, %d, %d"), *NameServerClient, ModifiedX, ModifiedY, ModifiedZ);
+
+	uint32 Seed = Ammo + (ModifiedX * 10000) + (ModifiedY * 1000) + (ModifiedZ * 100);
+	return Seed;
+}
+
+FVector AWeapon::VConeProcedural(FVector const& Dir, float ConeHalfAngleDeg, uint32 PelletNum)
+{
+	const float ConeHalfAngleRad = FMath::DegreesToRadians(ConeHalfAngleDeg);
+	if (ConeHalfAngleRad > 0.f)
+	{
+		const uint32 Seed = GenerateSeed(Dir);
+		float const RandU = HashFloatZeroToOne(Seed, PelletNum);
+		float const RandV = HashFloatZeroToOne(Seed, LARGERANDOM_A * PelletNum);
+
+		// Get spherical coords that have an even distribution over the unit sphere
+		// Method described at http://mathworld.wolfram.com/SpherePointPicking.html	
+		float Theta = 2.f * PI * RandU;
+		float Phi = FMath::Acos((2.f * RandV) - 1.f);
+
+		// restrict phi to [0, ConeHalfAngleRad]
+		// this gives an even distribution of points on the surface of the cone
+		// centered at the origin, pointing upward (z), with the desired angle
+		Phi = FMath::Fmod(Phi, ConeHalfAngleRad);
+
+		// get axes we need to rotate around
+		FMatrix const DirMat = FRotationMatrix(Dir.Rotation());
+		// note the axis translation, since we want the variation to be around X
+		FVector const DirZ = DirMat.GetScaledAxis( EAxis::X );		
+		FVector const DirY = DirMat.GetScaledAxis( EAxis::Y );
+
+		FVector Result = Dir.RotateAngleAxis(Phi * 180.f / PI, DirY);
+		Result = Result.RotateAngleAxis(Theta * 180.f / PI, DirZ);
+
+		// ensure it's a unit vector (might not have been passed in that way)
+		Result = Result.GetSafeNormal();
+		
+		return Result;
+	}
+	else
+	{
+		return Dir.GetSafeNormal();
 	}
 }

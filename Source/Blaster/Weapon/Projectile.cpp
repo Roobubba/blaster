@@ -48,7 +48,6 @@ void AProjectile::BeginPlay()
 	{
 		CollisionBox->OnComponentHit.AddDynamic(this, &AProjectile::OnHit);
 	}
-
 }
 
 void AProjectile::StartDestroyTimer()
@@ -80,7 +79,7 @@ void AProjectile::Tick(float DeltaTime)
 
 void AProjectile::SpawnImpactEffects()
 {
-	if (ImpactParticles)
+	if (ImpactParticles && GetWorld())
 	{
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactParticles, GetActorTransform());
 	}

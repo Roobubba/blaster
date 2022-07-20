@@ -9,52 +9,51 @@
 
 void AProjectileWeapon::Fire (const FVector& HitTarget)
 {
-    Super::Fire(HitTarget);
-
-    if (!HasAuthority())
+    if (HasAuthority())
     {
-        return;
-    }
-    
-    APawn* InstigatorPawn = Cast<APawn>(GetOwner());
+        APawn* InstigatorPawn = Cast<APawn>(GetOwner());
 
-    const USkeletalMeshSocket* MuzzleFlashSocket = GetWeaponMesh()->GetSocketByName(FName("MuzzleFlash"));
+        const USkeletalMeshSocket* MuzzleFlashSocket = GetWeaponMesh()->GetSocketByName(FName("MuzzleFlash"));
 
-    if (MuzzleFlashSocket)
-    {
-        FTransform SocketTransform = MuzzleFlashSocket->GetSocketTransform(GetWeaponMesh());
-        FVector ToTarget = HitTarget - SocketTransform.GetLocation();
-        FRotator TargetRotation = ToTarget.Rotation();
-
-        if (ProjectileClass && InstigatorPawn)
+        if (MuzzleFlashSocket)
         {
-            FActorSpawnParameters SpawnParams;
-            SpawnParams.Owner = GetOwner();
-            SpawnParams.Instigator = InstigatorPawn;
+            FTransform SocketTransform = MuzzleFlashSocket->GetSocketTransform(GetWeaponMesh());
+            FVector ToTarget = VConeProcedural(HitTarget - SocketTransform.GetLocation(), Spread, 0);
 
-            UWorld* World = GetWorld();
-            if (World)
+            FRotator TargetRotation = ToTarget.Rotation();
+
+            if (ProjectileClass && InstigatorPawn)
             {
-                AProjectile* Projectile = World->SpawnActor<AProjectile>(
-                    ProjectileClass,
-                    SocketTransform.GetLocation(),
-                    TargetRotation,
-                    SpawnParams
-                );
+                FActorSpawnParameters SpawnParams;
+                SpawnParams.Owner = GetOwner();
+                SpawnParams.Instigator = InstigatorPawn;
 
-                ABlasterCharacter* Character = Cast<ABlasterCharacter>(GetOwner());
-                if (Character)
+                UWorld* World = GetWorld();
+                if (World)
                 {
-                    if (Character->GetBuffComponent())
+                    AProjectile* Projectile = World->SpawnActor<AProjectile>(
+                        ProjectileClass,
+                        SocketTransform.GetLocation(),
+                        TargetRotation,
+                        SpawnParams
+                    );
+
+                    ABlasterCharacter* Character = Cast<ABlasterCharacter>(GetOwner());
+                    if (Character)
                     {
-                        float Multiplier = 1.f;
-                        if (Character->GetBuffComponent()->GetDamageMultiplier() > 1.f)
+                        if (Character->GetBuffComponent())
                         {
-                            Projectile->Damage *= Character->GetBuffComponent()->GetDamageMultiplier() > 1.f;
+                            float Multiplier = 1.f;
+                            if (Character->GetBuffComponent()->GetDamageMultiplier() > 1.f)
+                            {
+                                Projectile->Damage *= Character->GetBuffComponent()->GetDamageMultiplier() > 1.f;
+                            }
                         }
                     }
                 }
             }
         }
     }
+
+    Super::Fire(HitTarget);
 }

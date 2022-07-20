@@ -7,6 +7,15 @@
 #include "Blaster/BlasterTypes/WeaponType.h"
 #include "Weapon.generated.h"
 
+
+#define NOISE_A (uint32)0xB6297A4D
+#define NOISE_B (uint32)0x68E31DA4
+#define NOISE_C (uint32)0x1B56C4E9
+#define RANDOM_TO_FLOAT 2.32830643653869628906e-010f
+#define LARGERANDOM_A (uint32)198491317
+#define LARGERANDOM_B (uint32)6542989
+#define LARGERANDOM_C (uint32)60493
+
 UENUM(BlueprintType)
 enum class EWeaponState : uint8
 {
@@ -14,7 +23,18 @@ enum class EWeaponState : uint8
 	EWS_Equipped UMETA(DisplayName = "Equipped"),
 	EWS_EquippedSecondary UMETA(DisplayName = "Equipped Secondary"),
 	EWS_Dropped UMETA(DisplayName = "Dropped"),
+
 	EWS_MAX UMETA(DisplayName = "DefaultMax")
+};
+
+UENUM(BlueprintType)
+enum class EFireType : uint8
+{
+	EFT_HitScanSingleShot UMETA(DisplayName = "Hit Scan Single Shot Weapon"),
+	EFT_HitScanMultiShot UMETA(DisplayName = "Hit Scan Multishot Weapon"),
+	EFT_Projectile UMETA(DisplayName = "Projectile Weapon"),
+
+	EFT_MAX UMETA(DisplayName = "DefaultMax")	
 };
 
 UCLASS()
@@ -81,6 +101,9 @@ public:
 
 	bool bDestroyWeapon = false;
 
+	UPROPERTY(EditAnywhere)
+	EFireType FireType;
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void OnWeaponStateSet();
@@ -105,6 +128,9 @@ protected:
 		UPrimitiveComponent* OtherComp,
 		int32 OtherBodyIndex
 	);
+
+	UPROPERTY(EditAnywhere)
+	float Spread = 0.f;
 
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
@@ -146,6 +172,7 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	EWeaponType WeaponType;
+
 public:	
 
 	void SetWeaponState(EWeaponState State);
@@ -160,4 +187,10 @@ public:
 	FORCEINLINE EWeaponType GetWeaponType() const { return WeaponType; }
 	FORCEINLINE int32 GetAmmo() const { return Ammo; }
 	FORCEINLINE int32 GetMagCapacity() const { return MagCapacity; }
+
+
+	uint32 Hash(const uint32 Input, const uint32 Seed);
+	float HashFloatZeroToOne(const uint32 Input, const uint32 Seed);
+	FVector VConeProcedural(FVector const& Dir, float ConeHalfAngleDeg, uint32 PelletNum);
+	uint32 GenerateSeed(const FVector& Dir);
 };

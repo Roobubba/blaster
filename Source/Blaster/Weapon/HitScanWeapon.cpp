@@ -11,10 +11,10 @@
 #include "Blaster/BlasterComponents/CombatComponent.h"
 #include "Blaster/Blaster.h"
 
+//#include "DrawDebugHelpers.h"
+
 void AHitScanWeapon::Fire(const FVector& HitTarget)
 {
-    Super::Fire(HitTarget);
-
     APawn* OwnerPawn = Cast<APawn>(GetOwner());
 
     if (OwnerPawn == nullptr)
@@ -66,7 +66,7 @@ void AHitScanWeapon::Fire(const FVector& HitTarget)
             TMap<ABlasterCharacter*, float> DamageMap;
             for (int i = 0; i < PelletCount; i++)
             {
-                HitScan(Start, HitTarget, InstigatorController, DamageMap, Multiplier);
+                HitScan(Start, HitTarget, InstigatorController, DamageMap, Multiplier, (uint32) i);
             }
 
             if (HasAuthority() && InstigatorController)
@@ -81,11 +81,13 @@ void AHitScanWeapon::Fire(const FVector& HitTarget)
             }
         }
     }
+
+    Super::Fire(HitTarget);
 }
 
-void AHitScanWeapon::HitScan(const FVector& TraceStart, const FVector& HitTarget, AController* InstigatorController, TMap<ABlasterCharacter*, float> &DamageMap, float DamageMultiplier)
+void AHitScanWeapon::HitScan(const FVector& TraceStart, const FVector& HitTarget, AController* InstigatorController, TMap<ABlasterCharacter*, float> &DamageMap, float DamageMultiplier, uint32 PelletNum)
 {
-    FVector NewTraceDirection = UKismetMathLibrary::RandomUnitVectorInConeInDegrees((HitTarget - TraceStart).GetSafeNormal(), Spread);
+    FVector NewTraceDirection = VConeProcedural((HitTarget - TraceStart), Spread, PelletNum);
     FVector End = TraceStart + (NewTraceDirection * TRACE_LENGTH);
     FHitResult FireHit;
 
@@ -105,6 +107,16 @@ void AHitScanWeapon::HitScan(const FVector& TraceStart, const FVector& HitTarget
         if (FireHit.bBlockingHit)
         {
             BeamEnd = FireHit.ImpactPoint;
+
+            //DrawDebugSphere
+            //(
+            //    World,
+            //    BeamEnd,
+            //    16.f,
+            //    12,
+            //    FColor::Orange,
+            //    true
+            //);
 
             if (HasAuthority() && InstigatorController)
             {

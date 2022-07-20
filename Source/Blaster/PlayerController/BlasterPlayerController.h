@@ -80,6 +80,10 @@ protected:
 	UFUNCTION(Client, Reliable)
 	void ClientJoinMidgame(FName StateOfMatch, float Warmup, float Match, float Cooldown, float StartingTime);
 
+	void HighPingWarning();
+	void StopHighPingWarning();
+	void CheckPing(float DeltaTime);
+
 private:
 	UPROPERTY()
 	class ABlasterHUD* BlasterHUD;
@@ -124,6 +128,18 @@ private:
 	int32 HUDCarriedAmmo = 0;
 	int32 HUDGrenades = 4;
 	EWeaponType HUDWeaponType = EWeaponType::EWT_MAX;
+
+	float HighPingRunningTime = 0.f;
+	float HighPingAnimationRunningTime = 0.f;
+
+	UPROPERTY(EditAnywhere)
+	float HighPingMaximumDuration = 5.f;
+
+	UPROPERTY(EditAnywhere)
+	float HighPingCheckFrequency = 20.f;
+
+	UPROPERTY(EditAnywhere)
+	float HighPingThreshold = 50.f;
 
 public:
 	FORCEINLINE FName GetMatchState() const { return MatchState; }

@@ -246,6 +246,11 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 
 void UCombatComponent::SwapWeapons()
 {
+	if (CombatState != ECombatState::ECS_Unoccupied)
+	{
+		return;
+	}
+
 	AWeapon* TempWeapon = EquippedWeapon;
 	EquippedWeapon = SecondaryWeapon;
 	SecondaryWeapon = TempWeapon;
@@ -585,10 +590,28 @@ void UCombatComponent::Fire()
 	if (CanFire())
 	{
 		bCanFire = false;
-		ServerFire(HitTarget);
 
 		if (EquippedWeapon)
 		{
+			if (!Character->HasAuthority())
+			{
+				LocalFire(HitTarget);
+			}
+			ServerFire(HitTarget);
+
+			//switch(EquippedWeapon->FireType)
+			//{
+			//	case EFireType::EFT_Projectile:
+			//		FireProjectileWeapon();
+			//		break;
+			//	case EFireType::EFT_HitScanSingleShot:
+			//		FireHitScanSingleWeapon();
+			//		break;
+			//	case EFireType::EFT_HitScanMultiShot:
+			//		FireHitScanMultishotWeapon();
+			//		break;
+			//}
+
 			CrosshairShootingFactor += EquippedWeapon->CrosshairShootingExpansionAmount;
 			CrosshairShootingFactor = FMath::Clamp(CrosshairShootingFactor, 0.f, 4.f);
 		}
@@ -630,6 +653,16 @@ void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& Trac
 }
 
 void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
+{
+	if (Character && Character->IsLocallyControlled() && !Character->HasAuthority())
+	{
+		return;
+	}
+
+	LocalFire(TraceHitTarget);
+}
+
+void UCombatComponent::LocalFire(const FVector_NetQuantize& TraceHitTarget)
 {
 	if (EquippedWeapon == nullptr)
 	{

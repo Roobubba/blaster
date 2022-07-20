@@ -20,13 +20,10 @@ public:
 
 protected:
 
-	virtual void HitScan(const FVector& TraceStart, const FVector& HitTarget, AController* InstigatorController, TMap<ABlasterCharacter*, float> &DamageMap, float DamageMultiplier);
+	virtual void HitScan(const FVector& TraceStart, const FVector& HitTarget, AController* InstigatorController, TMap<ABlasterCharacter*, float> &DamageMap, float DamageMultiplier, uint32 PelletNum);
 
 	UPROPERTY(EditAnywhere)
 	int32 PelletCount = 1;
-
-	UPROPERTY(EditAnywhere)
-	float Spread = 0.f;
 
 	UPROPERTY(EditAnywhere)
 	float PhysicsImpactForcePerPellet = 14000.f;
