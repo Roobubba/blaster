@@ -4,6 +4,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "DrawDebugHelpers.h"
 
 AProjectileBullet::AProjectileBullet()
 {
@@ -36,6 +37,16 @@ void AProjectileBullet::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, 
 void AProjectileBullet::Destroyed()
 {
     SpawnImpactEffects();
+
+    DrawDebugSphere
+    (
+        GetWorld(),
+        GetActorLocation(),
+        16.f,
+        12,
+        FColor::Orange,
+        true
+    );
 
     Super::Destroyed();
 }
