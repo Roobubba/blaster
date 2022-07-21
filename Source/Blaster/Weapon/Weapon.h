@@ -42,7 +42,7 @@ public:
 	void SetHUDWeaponType();
 	
 	void ShowPickupWidget(bool bShowWidget);
-	virtual void Fire(const FIntVector& HitTargetInt);
+	virtual void Fire(const FVector& HitTarget, const int32& Seed);
 
 	void Dropped();
 	void AddAmmo(int32 AmmoToAdd);
@@ -179,5 +179,5 @@ public:
 	uint32 Hash(const uint32& Input, const uint32& Seed) const;
 	float HashFloatZeroToOne(const uint32& Input, const uint32& Seed) const;
 	FVector VConeProcedural(FVector const& Dir, float ConeHalfAngleDeg, const uint32& PelletNum, const uint32& Seed) const;
-	uint32 GenerateSeed(const FIntVector& HitTargetInt) const;
+	//uint32 GenerateSeed(const FIntVector& HitTargetInt) const;
 };

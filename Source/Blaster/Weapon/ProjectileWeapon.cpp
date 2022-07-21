@@ -7,7 +7,7 @@
 #include "Blaster/Character/BlasterCharacter.h"
 #include "Blaster/BlasterComponents/BuffComponent.h"
 
-void AProjectileWeapon::Fire (const FIntVector& HitTargetInt)
+void AProjectileWeapon::Fire (const FVector& HitTarget, const int32& Seed)
 {
     if (HasAuthority())
     {
@@ -19,9 +19,7 @@ void AProjectileWeapon::Fire (const FIntVector& HitTargetInt)
         {
             FTransform SocketTransform = MuzzleFlashSocket->GetSocketTransform(GetWeaponMesh());
             
-            FVector HitTarget = FVector(HitTargetInt.X / 100.f, HitTargetInt.Y / 100.f, HitTargetInt.Z / 100.f);
-
-            FVector ToTarget = VConeProcedural((HitTarget - SocketTransform.GetLocation()).GetSafeNormal(), Spread, 0, GenerateSeed(HitTargetInt));
+            FVector ToTarget = VConeProcedural((HitTarget - SocketTransform.GetLocation()).GetSafeNormal(), Spread, 0, Seed);
 
             FRotator TargetRotation = ToTarget.Rotation();
 
@@ -58,5 +56,5 @@ void AProjectileWeapon::Fire (const FIntVector& HitTargetInt)
         }
     }
 
-    Super::Fire(HitTargetInt);
+    Super::Fire(HitTarget, Seed);
 }

@@ -13,7 +13,7 @@
 
 #include "DrawDebugHelpers.h"
 
-void AHitScanWeapon::Fire(const FIntVector& HitTargetInt)
+void AHitScanWeapon::Fire(const FVector& HitTarget, const int32& Seed)
 {
     APawn* OwnerPawn = Cast<APawn>(GetOwner());
 
@@ -66,7 +66,7 @@ void AHitScanWeapon::Fire(const FIntVector& HitTargetInt)
             TMap<ABlasterCharacter*, float> DamageMap;
             for (int i = 0; i < PelletCount; i++)
             {
-                HitScan(Start, HitTargetInt, InstigatorController, DamageMap, Multiplier, (uint32) i, GenerateSeed(HitTargetInt));
+                HitScan(Start, HitTarget, InstigatorController, DamageMap, Multiplier, (uint32) i, Seed);
             }
 
             if (HasAuthority() && InstigatorController)
@@ -82,13 +82,11 @@ void AHitScanWeapon::Fire(const FIntVector& HitTargetInt)
         }
     }
 
-    Super::Fire(HitTargetInt);
+    Super::Fire(HitTarget, Seed);
 }
 
-void AHitScanWeapon::HitScan(const FVector& TraceStart, const FIntVector& HitTargetInt, AController* InstigatorController, TMap<ABlasterCharacter*, float> &DamageMap, const float& DamageMultiplier, const uint32& PelletNum, const uint32& Seed)
+void AHitScanWeapon::HitScan(const FVector& TraceStart, const FVector& HitTarget, AController* InstigatorController, TMap<ABlasterCharacter*, float> &DamageMap, const float& DamageMultiplier, const uint32& PelletNum, const uint32& Seed)
 {
-    FVector HitTarget = FVector(HitTargetInt.X / 100.f, HitTargetInt.Y / 100.f, HitTargetInt.Z / 100.f);
-
     FVector NewTraceDirection = VConeProcedural((HitTarget - TraceStart).GetSafeNormal(), Spread, PelletNum, Seed);
     FVector End = TraceStart + (NewTraceDirection * TRACE_LENGTH);
     FHitResult FireHit;
