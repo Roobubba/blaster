@@ -11,9 +11,9 @@
 #include "Blaster/BlasterComponents/CombatComponent.h"
 #include "Blaster/Blaster.h"
 
-//#include "DrawDebugHelpers.h"
+#include "DrawDebugHelpers.h"
 
-void AHitScanWeapon::Fire(const FVector& HitTarget)
+void AHitScanWeapon::Fire(const FIntVector& HitTargetInt)
 {
     APawn* OwnerPawn = Cast<APawn>(GetOwner());
 
@@ -66,7 +66,7 @@ void AHitScanWeapon::Fire(const FVector& HitTarget)
             TMap<ABlasterCharacter*, float> DamageMap;
             for (int i = 0; i < PelletCount; i++)
             {
-                HitScan(Start, HitTarget, InstigatorController, DamageMap, Multiplier, (uint32) i);
+                HitScan(Start, HitTargetInt, InstigatorController, DamageMap, Multiplier, (uint32) i, GenerateSeed(HitTargetInt));
             }
 
             if (HasAuthority() && InstigatorController)
@@ -82,12 +82,14 @@ void AHitScanWeapon::Fire(const FVector& HitTarget)
         }
     }
 
-    Super::Fire(HitTarget);
+    Super::Fire(HitTargetInt);
 }
 
-void AHitScanWeapon::HitScan(const FVector& TraceStart, const FVector& HitTarget, AController* InstigatorController, TMap<ABlasterCharacter*, float> &DamageMap, float DamageMultiplier, uint32 PelletNum)
+void AHitScanWeapon::HitScan(const FVector& TraceStart, const FIntVector& HitTargetInt, AController* InstigatorController, TMap<ABlasterCharacter*, float> &DamageMap, const float& DamageMultiplier, const uint32& PelletNum, const uint32& Seed)
 {
-    FVector NewTraceDirection = VConeProcedural((HitTarget - TraceStart).GetSafeNormal(), Spread, PelletNum);
+    FVector HitTarget = FVector(HitTargetInt.X / 100.f, HitTargetInt.Y / 100.f, HitTargetInt.Z / 100.f);
+
+    FVector NewTraceDirection = VConeProcedural((HitTarget - TraceStart).GetSafeNormal(), Spread, PelletNum, Seed);
     FVector End = TraceStart + (NewTraceDirection * TRACE_LENGTH);
     FHitResult FireHit;
 
@@ -108,15 +110,15 @@ void AHitScanWeapon::HitScan(const FVector& TraceStart, const FVector& HitTarget
         {
             BeamEnd = FireHit.ImpactPoint;
 
-            //DrawDebugSphere
-            //(
-            //    World,
-            //    BeamEnd,
-            //    16.f,
-            //    12,
-            //    FColor::Orange,
-            //    true
-            //);
+            DrawDebugSphere
+            (
+                World,
+                BeamEnd,
+                16.f,
+                12,
+                FColor::Orange,
+                true
+            );
 
             if (HasAuthority() && InstigatorController)
             {

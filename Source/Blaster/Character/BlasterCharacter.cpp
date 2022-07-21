@@ -184,7 +184,7 @@ void ABlasterCharacter::RotateInPlace(float DeltaTime)
 
 	if (CombatComponent)
 	{
-		FollowCamera->PostProcessSettings.DepthOfFieldFocalDistance = (CombatComponent->HitTarget - FollowCamera->GetComponentLocation()).Size();
+		FollowCamera->PostProcessSettings.DepthOfFieldFocalDistance = (CombatComponent->GetHitTarget() - FollowCamera->GetComponentLocation()).Size();
 	}
 }
 
@@ -851,7 +851,7 @@ FVector ABlasterCharacter::GetHitTarget() const
 		return FVector();
 	}
 
-	return CombatComponent->HitTarget;
+	return CombatComponent->GetHitTarget();
 }
 
 void ABlasterCharacter::OnRep_Health(float LastHealth)

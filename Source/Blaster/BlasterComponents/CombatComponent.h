@@ -81,13 +81,13 @@ protected:
 
 	void Fire();
 
-	void LocalFire(const FVector_NetQuantize& TraceHitTarget);
+	void LocalFire(const FIntVector& TraceHitTargetInt);
 
 	UFUNCTION(Server, Reliable)
-	void ServerFire(const FVector_NetQuantize& TraceHitTarget);
+	void ServerFire(const FIntVector& TraceHitTargetInt);
 
 	UFUNCTION(NetMulticast, Reliable)
-	void MulticastFire(const FVector_NetQuantize& TraceHitTarget);
+	void MulticastFire(const FIntVector& TraceHitTargetInt);
 
 	UFUNCTION(Server, Reliable)
 	void ServerReload();
@@ -141,8 +141,8 @@ private:
 
 	FHUDPackage HUDPackage;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	FVector HitTarget;
+	UPROPERTY()
+	FIntVector HitTargetInt;
 
 	/**
 	* Aiming and FOV 
@@ -231,4 +231,5 @@ public:
 	bool ShouldSwapWeapons();
 	FORCEINLINE float GetDefaultFOV() const { return DefaultFOV; }
 	FORCEINLINE int32 GetCarriedAmmo() const { return CarriedAmmo; }
+	FORCEINLINE FVector GetHitTarget() const { return FVector((float) (HitTargetInt.X / 100.f), (float) (HitTargetInt.Y / 100.f), (float) (HitTargetInt.Z / 100.f)); }
 };

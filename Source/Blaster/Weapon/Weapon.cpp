@@ -212,7 +212,7 @@ void AWeapon::ShowPickupWidget(bool bShowWidget)
 	}
 }
 
-void AWeapon::Fire(const FVector& HitTarget)
+void AWeapon::Fire(const FIntVector& HitTargetInt)
 {
 	if (FireAnimation)
 	{
@@ -349,7 +349,7 @@ void AWeapon::EnableCustomDepth(bool bEnable)
 	}
 }
 
-uint32 AWeapon::Hash(const uint32 Input, const uint32 Seed)
+uint32 AWeapon::Hash(const uint32& Input, const uint32& Seed) const 
 {
     uint32 Mangled = Input;
     Mangled *= NOISE_A;
@@ -363,39 +363,26 @@ uint32 AWeapon::Hash(const uint32 Input, const uint32 Seed)
     return Mangled;
 }
 
-float AWeapon::HashFloatZeroToOne(const uint32 Input, const uint32 Seed)
+float AWeapon::HashFloatZeroToOne(const uint32& Input, const uint32& Seed) const 
 {
     return (float) ((int) AWeapon::Hash(Input, Seed) * RANDOM_TO_FLOAT) + 0.5f;
 }
 
-uint32 AWeapon::GenerateSeed(const FVector& Dir)
+uint32 AWeapon::GenerateSeed(const FIntVector& HitTargetInt) const 
 {
-	//FString NameServerClient = FString("Client ");
-	//if (HasAuthority())
-	//{
-	//	NameServerClient = FString("Server ");
-	//}
-	//
-	//UE_LOG(LogTemp, Warning, TEXT("%sDir values: %f, %f, %f"), *NameServerClient, Dir.X, Dir.Y, Dir.Z);
+	//Removed ammo from here because we will no longer replicate it, so two shots hitting exactly the same HitTarget location will now have identical spread
 
-	const uint32 ModifiedX = (uint32)FMath::RoundToInt32((Dir.X + 1.f) * 8);
-	const uint32 ModifiedY = (uint32)FMath::RoundToInt32((Dir.Y + 1.f) * 8);
-	const uint32 ModifiedZ = (uint32)FMath::RoundToInt32((Dir.Z + 1.f) * 8);
-
-	//UE_LOG(LogTemp, Warning, TEXT("%sModified values: %d, %d, %d"), *NameServerClient, ModifiedX, ModifiedY, ModifiedZ);
-
-	uint32 Seed = Ammo + (ModifiedX * 10000) + (ModifiedY * 1000) + (ModifiedZ * 100);
+	uint32 Seed = (HitTargetInt.X * 1000) + (HitTargetInt.Y * 100) + (HitTargetInt.Z * 10);
 	return Seed;
 }
 
-FVector AWeapon::VConeProcedural(FVector const& Dir, float ConeHalfAngleDeg, uint32 PelletNum)
+FVector AWeapon::VConeProcedural(FVector const& Dir, float ConeHalfAngleDeg, const uint32& PelletNum, const uint32& Seed) const
 {
 	const float ConeHalfAngleRad = FMath::DegreesToRadians(ConeHalfAngleDeg);
 	if (ConeHalfAngleRad > 0.f)
 	{
-		const uint32 Seed = GenerateSeed(Dir);
 		float const RandU = HashFloatZeroToOne(Seed, PelletNum);
-		float const RandV = HashFloatZeroToOne(Seed, LARGERANDOM_A * PelletNum);
+		float const RandV = HashFloatZeroToOne(Seed, LARGERANDOM_C * PelletNum);
 
 		// Get spherical coords that have an even distribution over the unit sphere
 		// Method described at http://mathworld.wolfram.com/SpherePointPicking.html	

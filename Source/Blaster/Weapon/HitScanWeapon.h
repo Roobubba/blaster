@@ -16,11 +16,11 @@ class BLASTER_API AHitScanWeapon : public AWeapon
 
 public:
 
-	virtual void Fire(const FVector& HitTarget) override;
+	virtual void Fire(const FIntVector& HitTargetInt) override;
 
 protected:
 
-	virtual void HitScan(const FVector& TraceStart, const FVector& HitTarget, AController* InstigatorController, TMap<ABlasterCharacter*, float> &DamageMap, float DamageMultiplier, uint32 PelletNum);
+	virtual void HitScan(const FVector& TraceStart, const FIntVector& HitTargetInt, AController* InstigatorController, TMap<ABlasterCharacter*, float> &DamageMap, const float& DamageMultiplier, const uint32& PelletNum, const uint32& Seed);
 
 	UPROPERTY(EditAnywhere)
 	int32 PelletCount = 1;

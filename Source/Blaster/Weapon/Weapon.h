@@ -42,7 +42,7 @@ public:
 	void SetHUDWeaponType();
 	
 	void ShowPickupWidget(bool bShowWidget);
-	virtual void Fire(const FVector& HitTarget);
+	virtual void Fire(const FIntVector& HitTargetInt);
 
 	void Dropped();
 	void AddAmmo(int32 AmmoToAdd);
@@ -176,8 +176,8 @@ public:
 	FORCEINLINE int32 GetMagCapacity() const { return MagCapacity; }
 
 
-	uint32 Hash(const uint32 Input, const uint32 Seed);
-	float HashFloatZeroToOne(const uint32 Input, const uint32 Seed);
-	FVector VConeProcedural(FVector const& Dir, float ConeHalfAngleDeg, uint32 PelletNum);
-	uint32 GenerateSeed(const FVector& Dir);
+	uint32 Hash(const uint32& Input, const uint32& Seed) const;
+	float HashFloatZeroToOne(const uint32& Input, const uint32& Seed) const;
+	FVector VConeProcedural(FVector const& Dir, float ConeHalfAngleDeg, const uint32& PelletNum, const uint32& Seed) const;
+	uint32 GenerateSeed(const FIntVector& HitTargetInt) const;
 };
