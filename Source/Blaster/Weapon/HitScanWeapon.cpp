@@ -108,15 +108,15 @@ void AHitScanWeapon::HitScan(const FVector& TraceStart, const FVector& HitTarget
         {
             BeamEnd = FireHit.ImpactPoint;
 
-            DrawDebugSphere
-            (
-                World,
-                BeamEnd,
-                16.f,
-                12,
-                FColor::Orange,
-                true
-            );
+            //DrawDebugSphere
+            //(
+            //    World,
+            //    BeamEnd,
+            //    16.f,
+            //    12,
+            //    FColor::Orange,
+            //    true
+            //);
 
             if (HasAuthority() && InstigatorController)
             {

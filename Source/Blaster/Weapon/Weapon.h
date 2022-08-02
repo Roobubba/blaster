@@ -141,13 +141,20 @@ private:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class ACasing> CasingClass;
 
-	UPROPERTY(EditAnywhere, ReplicatedUsing = OnRep_Ammo)
+	UPROPERTY(EditAnywhere)
 	int32 Ammo;
 
-	UFUNCTION()
-	void OnRep_Ammo();
-
 	void SpendRound();
+
+	UFUNCTION(Client, Reliable)
+	void ClientUpdateAmmo(int32 ServerAmmo);
+
+	UFUNCTION(Client, Reliable)
+	void ClientAddAmmo(int32 AmmoToAdd);
+
+	//Number of unprocessed server requests for Ammo.
+	// Incremented in SpendRound, Decremented in ClientUpdateAmmo
+	int32 SequenceAmmo = 0;
 
 	UPROPERTY(EditAnywhere)
 	int32 MagCapacity;
@@ -175,9 +182,7 @@ public:
 	FORCEINLINE int32 GetAmmo() const { return Ammo; }
 	FORCEINLINE int32 GetMagCapacity() const { return MagCapacity; }
 
-
 	uint32 Hash(const uint32& Input, const uint32& Seed) const;
 	float HashFloatZeroToOne(const uint32& Input, const uint32& Seed) const;
 	FVector VConeProcedural(FVector const& Dir, float ConeHalfAngleDeg, const uint32& PelletNum, const uint32& Seed) const;
-	//uint32 GenerateSeed(const FIntVector& HitTargetInt) const;
 };

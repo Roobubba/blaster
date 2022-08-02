@@ -65,7 +65,6 @@ void AWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AWeapon, WeaponState);
-	DOREPLIFETIME(AWeapon, Ammo);
 }
 
 void AWeapon::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,	UPrimitiveComponent* OtherComp,	int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -242,10 +241,7 @@ void AWeapon::Fire(const FVector& HitTarget, const int32& Seed)
 		}
 	}
 
-	if (HasAuthority())
-	{
-		SpendRound();
-	}
+	SpendRound();
 }
 
 void AWeapon::Dropped()
@@ -301,11 +297,47 @@ void AWeapon::SpendRound()
 {
 	Ammo = FMath::Clamp(Ammo - 1, 0, MagCapacity);
 	SetHUDAmmo();
+	if (HasAuthority())
+	{
+		ClientUpdateAmmo(Ammo);
+	}
+	else
+	{
+		++SequenceAmmo;
+	}
 }
 
-void AWeapon::OnRep_Ammo()
+void AWeapon::ClientUpdateAmmo_Implementation(int32 ServerAmmo)
 {
+	if (HasAuthority())
+	{
+		return;
+	}
+
+	Ammo = ServerAmmo;
+	--SequenceAmmo;
+	Ammo -= SequenceAmmo;
+	SetHUDAmmo();
+}
+
+void AWeapon::AddAmmo(int32 AmmoToAdd)
+{
+	Ammo = FMath::Clamp(Ammo + AmmoToAdd, 0, MagCapacity);
+	SetHUDAmmo();
+	ClientAddAmmo(AmmoToAdd);
+}
+
+void AWeapon::ClientAddAmmo_Implementation(int32 AmmoToAdd)
+{
+	if (HasAuthority())
+	{
+		return;
+	}
+
+	Ammo = FMath::Clamp(Ammo + AmmoToAdd, 0, MagCapacity);
+	
 	BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(GetOwner()) : BlasterOwnerCharacter;
+	
 	if (BlasterOwnerCharacter && BlasterOwnerCharacter->GetCombat() && GetIsFull())
 	{	
 		BlasterOwnerCharacter->GetCombat()->JumpToShotgunEnd();
@@ -335,12 +367,6 @@ void AWeapon::OnRep_Owner()
 	}
 }
 
-void AWeapon::AddAmmo(int32 AmmoToAdd)
-{
-	Ammo = FMath::Clamp(Ammo + AmmoToAdd, 0, MagCapacity);
-	SetHUDAmmo();
-}
-
 void AWeapon::EnableCustomDepth(bool bEnable)
 {
 	if (WeaponMesh)
@@ -367,16 +393,6 @@ float AWeapon::HashFloatZeroToOne(const uint32& Input, const uint32& Seed) const
 {
     return (float) ((int) AWeapon::Hash(Input, Seed) * RANDOM_TO_FLOAT) + 0.5f;
 }
-
-//uint32 AWeapon::GenerateSeed(const FIntVector& HitTargetInt) const 
-//{
-//	// Removed ammo from here because we will no longer replicate it, so two shots hitting exactly the same HitTarget location will now have identical spread
-//	// Which is really noticeable for high fire rate weapons when not moving and not changing aim position
-//	// A better solution would have been to use a seed based on some hash value from the network packet used in the Fire RPC
-//
-//	uint32 Seed = (HitTargetInt.X * 1000) + (HitTargetInt.Y * 100) + (HitTargetInt.Z * 10);
-//	return Seed;
-//}
 
 FVector AWeapon::VConeProcedural(FVector const& Dir, float ConeHalfAngleDeg, const uint32& PelletNum, const uint32& Seed) const
 {

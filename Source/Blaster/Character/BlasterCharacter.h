@@ -50,6 +50,9 @@ public:
 
 	void SpawnDefaultWeapon();
 
+	UPROPERTY()
+	TMap<FName, class UBoxComponent*> HitCollisionBoxes;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -81,6 +84,63 @@ protected:
 	void DropOrDestroyWeapon(AWeapon* Weapon);
 	void DropOrDestroyWeapons();
 
+	// Hit Boxes for Server side rewind
+	// Naming deliberately to match character bone names
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* HitboxHead;
+	
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* HitboxPelvis;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* HitboxSpineUpper;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* HitboxSpineLower;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* HitboxUpperArmLeft;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* HitboxUpperArmRight;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* HitboxLowerArmLeft;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* HitboxLowerArmRight;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* HitboxHandLeft;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* HitboxHandRight;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* HitboxBackpack;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* HitboxBlanket;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* HitboxThighLeft;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* HitboxThighRight;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* HitboxCalfLeft;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* HitboxCalfRight;
+	
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* HitboxFootLeft;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* HitboxFootRight;
+
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera)
 	class USpringArmComponent* CameraBoom;
@@ -102,6 +162,9 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = Buff, meta = (AllowPrivateAccess = "true"))
 	class UBuffComponent* BuffComponent;
+
+	UPROPERTY(VisibleAnywhere, Category = LagCompensation, meta = (AllowPrivateAccess = "true"))
+	class ULagCompensationComponent* LagCompensationComponent;
 
 	UFUNCTION(Server, Reliable)
 	void ServerEquipButtonPressed();
@@ -267,5 +330,6 @@ public:
 	FORCEINLINE float GetBaseWalkSpeed() const { return BaseWalkSpeed; }
 	FORCEINLINE void SetHealth(float Amount) { Health = Amount; }
 	FORCEINLINE void SetShield(float Amount) { Shield = Amount; }
+	bool IsLocallyReloading() const;
 };
 

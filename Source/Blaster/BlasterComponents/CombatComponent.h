@@ -38,6 +38,9 @@ public:
 	void UpdateAmmoValues();
 	void UpdateShotgunAmmoValues();
 
+	void ApplyAmmoReload();
+	void ApplyShotgunAmmoReload();
+
 	UFUNCTION(BlueprintCallable)
 	void ShotgunShellReload();
 
@@ -60,6 +63,8 @@ public:
 
 	void SetDamageMultiplier(float DamageMultiplier);
 	
+	bool bLocallyReloading = false;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -129,8 +134,13 @@ private:
 	UPROPERTY(ReplicatedUsing = OnRep_SecondaryWeapon)
 	AWeapon* SecondaryWeapon;
 
-	UPROPERTY(Replicated)
-	bool bAiming;
+	UPROPERTY(ReplicatedUsing = OnRep_Aiming)
+	bool bAiming = false;
+
+	bool bAimButtonPressed = false;
+
+	UFUNCTION()
+	void OnRep_Aiming();
 
 	bool bFireButtonPressed;
 
@@ -191,6 +201,7 @@ private:
 	void OnRep_CarriedAmmo();
 	
 	TMap<EWeaponType, int32> CarriedAmmoMap;
+	TMap<EWeaponType, int32> MaxCarriedAmmoMap;
 
 	UPROPERTY(EditAnywhere)
 	int32 StartingARAmmo = 30;
@@ -212,6 +223,27 @@ private:
 	
 	UPROPERTY(EditAnywhere)
 	int32 StartingGrenadeLauncherAmmo = 2;
+	
+	UPROPERTY(EditAnywhere)
+	int32 MaxARAmmo = 60;
+
+	UPROPERTY(EditAnywhere)
+	int32 MaxRocketAmmo = 8;
+
+	UPROPERTY(EditAnywhere)
+	int32 MaxPistolAmmo = 60;
+
+	UPROPERTY(EditAnywhere)
+	int32 MaxSMGAmmo = 90;
+
+	UPROPERTY(EditAnywhere)
+	int32 MaxShotgunAmmo = 32;
+
+	UPROPERTY(EditAnywhere)
+	int32 MaxSniperAmmo = 16;
+	
+	UPROPERTY(EditAnywhere)
+	int32 MaxGrenadeLauncherAmmo = 12;
 
 	void InitializeCarriedAmmo();
 
