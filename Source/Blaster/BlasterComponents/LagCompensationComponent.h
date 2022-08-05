@@ -33,6 +33,9 @@ struct FFramePackage
 	UPROPERTY()
 	TMap<FName, FBoxInformation> HitBoxInfo;
 
+	UPROPERTY()
+	ABlasterCharacter* PackageCharacter = nullptr;
+
 };
 
 UCLASS()
@@ -47,14 +50,24 @@ public:
 
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	void ShowFramePackage(const FFramePackage& Package, const FColor& Color);
-	void ServerSideRewind(const ABlasterCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& HitLocation, float HitTime);
+
+	UFUNCTION(Server, Reliable)
+	void ServerScoreRequest(const TArray<ABlasterCharacter*>& HitCharacters, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& HitLocation, float HitTime, const int32& NumberOfPellets, const uint32& Seed);
 
 protected:
 	virtual void BeginPlay() override;
 
 	void SaveFramePackage(FFramePackage& Package);
 	FFramePackage InterpBetweenFrames(const FFramePackage& OlderFrame, const FFramePackage& YoungerFrame, float HitTime);
-	
+	void CacheBoxPositions(ABlasterCharacter* CharacterToCache, FFramePackage& OutFramePackage);
+	void MoveBoxes(const FFramePackage& Package, bool bResetBoxes = false);
+	void EnableCharacterMeshCollision(ABlasterCharacter* HitCharacter, ECollisionEnabled::Type CollisionEnabled);
+
+	void SaveFramePackage();
+
+	bool HitScanServerSideRewind(const TArray<FFramePackage>& FramePackages, const FVector& TraceStart, const FVector& HitTarget, TMap<ABlasterCharacter*, float> &DamageMap, const float& DamageMultiplier, const uint32& PelletNum, const uint32& Seed, const UWorld* World, const class AWeapon* InstigatorWeapon);
+	FFramePackage GetFrameToCheck(ABlasterCharacter* HitCharacter, float HitTime);
+
 private:
 	UPROPERTY()
 	ABlasterCharacter* Character;

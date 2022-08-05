@@ -53,10 +53,10 @@ void UCombatComponent::BeginPlay()
 			CurrentFOV = DefaultFOV;
 		}
 
-		if (Character->HasAuthority())
-		{
+		//if (Character->HasAuthority())
+		//{
 			InitializeCarriedAmmo();
-		}
+		//}
 	}
 
 	bDrawCrosshairs = true;
@@ -476,10 +476,10 @@ void UCombatComponent::ApplyAmmoReload()
 	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType()) && MaxCarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType()))
 	{
 		CarriedAmmoMap[EquippedWeapon->GetWeaponType()] = FMath::Clamp(CarriedAmmoMap[EquippedWeapon->GetWeaponType()] - ReloadAmount, 0, MaxCarriedAmmoMap[EquippedWeapon->GetWeaponType()]);
-		if (Character->HasAuthority())
-		{
+		//if (Character->HasAuthority())
+		//{
 			CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
-		}
+		//}
 	}
 	
 	Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;

@@ -51,6 +51,8 @@ public:
 	UFUNCTION(Server, Reliable)
 	void ServerGetMatchState();
 
+	float SingleTripTime = 0.f;
+
 protected:
 	virtual void BeginPlay() override;
 

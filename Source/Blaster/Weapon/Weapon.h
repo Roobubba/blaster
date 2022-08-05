@@ -118,8 +118,20 @@ protected:
 
 	UPROPERTY(EditAnywhere)
 	float Spread = 0.f;
+	
+	UPROPERTY(EditAnywhere)
+	float Damage = 20.f;
+
+	UPROPERTY(EditAnywhere)
+	bool bUseServerSideRewind = false;
+
+	UPROPERTY()
+	class ABlasterCharacter* BlasterOwnerCharacter;
+	UPROPERTY()
+	class ABlasterPlayerController* BlasterOwnerController;
 
 private:
+
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
 	USkeletalMeshComponent* WeaponMesh;
 
@@ -159,11 +171,6 @@ private:
 	UPROPERTY(EditAnywhere)
 	int32 MagCapacity;
 
-	UPROPERTY()
-	class ABlasterCharacter* BlasterOwnerCharacter;
-	UPROPERTY()
-	class ABlasterPlayerController* BlasterOwnerController;
-
 	UPROPERTY(EditAnywhere)
 	EWeaponType WeaponType;
 
@@ -185,4 +192,6 @@ public:
 	uint32 Hash(const uint32& Input, const uint32& Seed) const;
 	float HashFloatZeroToOne(const uint32& Input, const uint32& Seed) const;
 	FVector VConeProcedural(FVector const& Dir, float ConeHalfAngleDeg, const uint32& PelletNum, const uint32& Seed) const;
+	FORCEINLINE float GetDamage() const { return Damage; }
+	FORCEINLINE float GetSpread() const { return Spread; }
 };

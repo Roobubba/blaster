@@ -247,8 +247,6 @@ void ABlasterPlayerController::SetHUDShieldExtraRegen(float ShieldRegenPercent)
     }
 }
 
-
-
 void ABlasterPlayerController::SetHUDScore(float Score)
 {
     BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
@@ -599,7 +597,8 @@ void ABlasterPlayerController::ServerRequestServerTime_Implementation(float Time
 void ABlasterPlayerController::ClientReportServerTime_Implementation(float TimeOfClientRequest, float TimeServerReceivedClientRequest)
 {
     float RoundTripTime = GetWorld()->GetTimeSeconds() - TimeOfClientRequest;
-    float CurrentServerTime = TimeServerReceivedClientRequest + 0.5f * RoundTripTime;
+    SingleTripTime = 0.5f * RoundTripTime;
+    float CurrentServerTime = TimeServerReceivedClientRequest + SingleTripTime;
     ClientServerTimeDelta = CurrentServerTime - GetWorld()->GetTimeSeconds();
 }
 
