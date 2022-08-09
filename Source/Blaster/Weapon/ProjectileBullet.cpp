@@ -2,9 +2,12 @@
 
 #include "ProjectileBullet.h"
 #include "Kismet/GameplayStatics.h"
-#include "GameFramework/Character.h"
+#include "Blaster/Character/BlasterCharacter.h"
+#include "Blaster/PlayerController/BlasterPlayerController.h"
+#include "Blaster/BlasterComponents/LagCompensationComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
-#include "DrawDebugHelpers.h"
+//#include "DrawDebugHelpers.h"
+//#include "Blaster/Blaster.h"
 
 AProjectileBullet::AProjectileBullet()
 {
@@ -34,23 +37,41 @@ void AProjectileBullet::PostEditChangeProperty(struct FPropertyChangedEvent& Eve
 
 void AProjectileBullet::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-    if (HasAuthority())
-    {
-        ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
+    ABlasterCharacter* OwnerCharacter = Cast<ABlasterCharacter>(GetOwner());
 
-        if (OwnerCharacter)
+    if (OwnerCharacter)
+    {
+        ABlasterPlayerController* OwnerController = Cast<ABlasterPlayerController>(OwnerCharacter->Controller);
+        if (OwnerController)
         {
-            AController* OwnerController = OwnerCharacter->Controller;
-            if (OwnerController)
+            if (OwnerCharacter->HasAuthority() && (!bUseServerSideRewind || OwnerCharacter->IsLocallyControlled()))
             {
                 UGameplayStatics::ApplyDamage(OtherActor, Damage, OwnerController, this, UDamageType::StaticClass());
+                Super::OnHit(HitComp, OtherActor, OtherComp, NormalImpulse, Hit);
+                Destroy();
+                return;
+            }
+
+            
+            if (bUseServerSideRewind && OwnerCharacter->GetLagCompensation() && OwnerCharacter->IsLocallyControlled())
+            {
+                ABlasterCharacter* HitCharacter = Cast<ABlasterCharacter>(OtherActor);
+                if (HitCharacter)
+                {
+                    OwnerCharacter->GetLagCompensation()->ProjectileServerScoreRequest
+                        (
+                            HitCharacter,
+                            TraceStart,
+                            InitialVelocity,
+                            OwnerController->GetServerTime() - OwnerController->SingleTripTime
+                        );
+                }
             }
         }
-
-        Super::OnHit(HitComp, OtherActor, OtherComp, NormalImpulse, Hit);
-
-        Destroy();
     }
+
+    Super::OnHit(HitComp, OtherActor, OtherComp, NormalImpulse, Hit);
+    Destroy();
 }
 
 void AProjectileBullet::Destroyed()
@@ -70,23 +91,23 @@ void AProjectileBullet::Destroyed()
     Super::Destroyed();
 }
 
-void AProjectileBullet::BeginPlay()
-{
-    Super::BeginPlay();
-
-    FPredictProjectilePathParams PathParams;
-    PathParams.bTraceWithChannel = true;
-    PathParams.bTraceWithCollision = true;
-    PathParams.DrawDebugTime = 5.f;
-    PathParams.DrawDebugType = EDrawDebugTrace::ForDuration;
-    PathParams.LaunchVelocity = GetActorForwardVector() * 3500.f;
-    PathParams.MaxSimTime = 4.f;
-    PathParams.ProjectileRadius = 5.f;
-    PathParams.SimFrequency = 30.f;
-    PathParams.StartLocation = GetActorLocation();
-    PathParams.TraceChannel = ECollisionChannel::ECC_Visibility;
-    PathParams.ActorsToIgnore.Add(this);
-
-    FPredictProjectilePathResult PathResult;
-    UGameplayStatics::PredictProjectilePath(this, PathParams, PathResult);
-}
+//void AProjectileBullet::BeginPlay()
+//{
+//    Super::BeginPlay();
+//
+//    //FPredictProjectilePathParams PathParams;
+//    //PathParams.bTraceWithChannel = true;
+//    //PathParams.bTraceWithCollision = true;
+//    //PathParams.DrawDebugTime = 5.f;
+//    //PathParams.DrawDebugType = EDrawDebugTrace::ForDuration;
+//    //PathParams.LaunchVelocity = GetActorForwardVector() * InitialSpeed;
+//    //PathParams.MaxSimTime = 4.f;
+//    //PathParams.ProjectileRadius = 5.f;
+//    //PathParams.SimFrequency = 30.f;
+//    //PathParams.StartLocation = GetActorLocation();
+//    //PathParams.TraceChannel = ECC_HitBox;
+//    //PathParams.ActorsToIgnore.Add(this);
+////
+//    //FPredictProjectilePathResult PathResult;
+//    //UGameplayStatics::PredictProjectilePath(this, PathParams, PathResult);
+//}

@@ -123,7 +123,7 @@ protected:
 	float Damage = 20.f;
 
 	UPROPERTY(EditAnywhere)
-	bool bUseServerSideRewind = false;
+	bool bUseServerSideRewind = true;
 
 	UPROPERTY()
 	class ABlasterCharacter* BlasterOwnerCharacter;

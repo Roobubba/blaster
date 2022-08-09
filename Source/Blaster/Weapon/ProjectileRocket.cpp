@@ -41,6 +41,8 @@ void AProjectileRocket::BeginPlay()
 {
     Super::BeginPlay();
 
+    bUseServerSideRewind = false;
+
     if (!HasAuthority())
 	{
 		CollisionBox->OnComponentHit.AddDynamic(this, &AProjectileRocket::OnHit);

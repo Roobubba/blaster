@@ -15,7 +15,6 @@ public:
 	AProjectile();
 	virtual void Tick(float DeltaTime) override;
 
-	UPROPERTY(EditAnywhere)
 	float Damage = 20.f;
 
 	//Used for server-side rewind

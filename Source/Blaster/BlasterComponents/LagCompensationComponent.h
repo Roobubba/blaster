@@ -54,6 +54,10 @@ public:
 	UFUNCTION(Server, Reliable)
 	void ServerScoreRequest(const TArray<ABlasterCharacter*>& HitCharacters, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& HitLocation, float HitTime, const int32& NumberOfPellets, const uint32& Seed);
 
+	UFUNCTION(Server, Reliable)
+	void ProjectileServerScoreRequest(ABlasterCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize100& InitialVelocity, float HitTime);
+
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -65,7 +69,9 @@ protected:
 
 	void SaveFramePackage();
 
-	bool HitScanServerSideRewind(const TArray<FFramePackage>& FramePackages, const FVector& TraceStart, const FVector& HitTarget, TMap<ABlasterCharacter*, float> &DamageMap, const float& DamageMultiplier, const uint32& PelletNum, const uint32& Seed, const UWorld* World, const class AWeapon* InstigatorWeapon);
+	bool HitScanServerSideRewind(const FVector& TraceStart, const FVector& HitTarget, TMap<ABlasterCharacter*, float> &DamageMap, const float& DamageMultiplier, const uint32& PelletNum, const uint32& Seed, const UWorld* World, const class AWeapon* InstigatorWeapon, bool bHeadShots = false);
+	bool ProjectileServerSideRewind(const FVector& TraceStart, const FVector& InitialVelocity, bool bHeadShots = false);
+	
 	FFramePackage GetFrameToCheck(ABlasterCharacter* HitCharacter, float HitTime);
 
 private:

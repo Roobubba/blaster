@@ -44,6 +44,8 @@ void AProjectileGrenade::PostEditChangeProperty(struct FPropertyChangedEvent& Ev
 void AProjectileGrenade::BeginPlay()
 {
     AActor::BeginPlay();
+    
+    bUseServerSideRewind = false;
 
     StartExplodeTimer();
     SpawnTrailSystem();

@@ -72,7 +72,9 @@ void AHitScanWeapon::Fire(const FVector& HitTarget, const int32& Seed)
                     HitScan(Start, HitTarget, DamageMap, Multiplier, (uint32) i, Seed);
                 }
 
-                if (HasAuthority() && !bUseServerSideRewind)
+                bool bCauseAuthDamage = !bUseServerSideRewind || OwnerPawn->IsLocallyControlled();
+
+                if (HasAuthority() && bCauseAuthDamage)
                 {
                     for(auto& DamageEvent : DamageMap)
                     {
@@ -83,7 +85,7 @@ void AHitScanWeapon::Fire(const FVector& HitTarget, const int32& Seed)
                     }
                 }
 
-                if (!HasAuthority() && bUseServerSideRewind)
+                if (!HasAuthority() && bUseServerSideRewind && OwnerPawn->IsLocallyControlled())
                 {
                     BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(OwnerPawn) : BlasterOwnerCharacter;
                     BlasterOwnerController = BlasterOwnerController == nullptr ? Cast<ABlasterPlayerController>(InstigatorController) : BlasterOwnerController;

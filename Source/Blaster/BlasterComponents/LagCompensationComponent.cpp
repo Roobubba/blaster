@@ -11,6 +11,7 @@
 #include "Components/BoxComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Blaster/BlasterComponents/CombatComponent.h"
+#include "Blaster/Blaster.h"
 
 ULagCompensationComponent::ULagCompensationComponent()
 {
@@ -92,7 +93,7 @@ void ULagCompensationComponent::ServerScoreRequest_Implementation(const TArray<A
 
 		UBoxComponent* HeadBox = Package.PackageCharacter->HitCollisionBoxes[FName("HitboxHead")];
 		HeadBox->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-		HeadBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
+		HeadBox->SetCollisionResponseToChannel(ECC_HitBox, ECollisionResponse::ECR_Block);
 	}
 
 	UWorld* World = GetWorld();
@@ -108,7 +109,7 @@ void ULagCompensationComponent::ServerScoreRequest_Implementation(const TArray<A
 
 	for (int32 i = 0; i < NumberOfPellets; i++)
 	{
-		bool bHit = HitScanServerSideRewind(FramePackages, TraceStart, HitLocation, DamageMap, Multiplier, (uint32) i, Seed, World, InstigatorWeapon);
+		bool bHit = HitScanServerSideRewind(TraceStart, HitLocation, DamageMap, Multiplier, (uint32) i, Seed, World, InstigatorWeapon, true);
 		PelletsThatAlreadyHit.Add(bHit);
 	}
 
@@ -125,7 +126,7 @@ void ULagCompensationComponent::ServerScoreRequest_Implementation(const TArray<A
 			if (HitBoxPair.Value != nullptr)
 			{
 				HitBoxPair.Value->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-				HitBoxPair.Value->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
+				HitBoxPair.Value->SetCollisionResponseToChannel(ECC_HitBox, ECollisionResponse::ECR_Block);
 			}
 		}
 
@@ -142,7 +143,7 @@ void ULagCompensationComponent::ServerScoreRequest_Implementation(const TArray<A
 	{
 		if (!PelletsThatAlreadyHit[i])
 		{
-			HitScanServerSideRewind(FramePackages, TraceStart, HitLocation, DamageMap, Multiplier, (uint32) i, Seed, World, InstigatorWeapon);
+			HitScanServerSideRewind(TraceStart, HitLocation, DamageMap, Multiplier, (uint32) i, Seed, World, InstigatorWeapon);
 		}
 	}
 
@@ -164,7 +165,7 @@ void ULagCompensationComponent::ServerScoreRequest_Implementation(const TArray<A
 	}
 }
 
-bool ULagCompensationComponent::HitScanServerSideRewind(const TArray<FFramePackage>& FramePackages, const FVector& TraceStart, const FVector& HitTarget, TMap<ABlasterCharacter*, float> &DamageMap, const float& DamageMultiplier, const uint32& PelletNum, const uint32& Seed, const UWorld* World, const AWeapon* InstigatorWeapon)
+bool ULagCompensationComponent::HitScanServerSideRewind(const FVector& TraceStart, const FVector& HitTarget, TMap<ABlasterCharacter*, float> &DamageMap, const float& DamageMultiplier, const uint32& PelletNum, const uint32& Seed, const UWorld* World, const AWeapon* InstigatorWeapon, bool bHeadShots)
 {
 	if (Character == nullptr || Character->GetEquippedWeapon() == nullptr)
 	{
@@ -184,13 +185,23 @@ bool ULagCompensationComponent::HitScanServerSideRewind(const TArray<FFramePacka
             FireHit,
             TraceStart,
             End,
-            ECollisionChannel::ECC_Visibility
+            ECC_HitBox
         );
 
         FVector BeamEnd = End;
 
         if (FireHit.bBlockingHit)
         {
+			//if (FireHit.Component.IsValid())
+			//{
+			//	UBoxComponent* BoxThatWeHit = Cast<UBoxComponent>(FireHit.Component);
+			//	if (BoxThatWeHit)
+			//	{
+			//		DrawDebugBox(World, BoxThatWeHit->GetComponentLocation(), BoxThatWeHit->GetScaledBoxExtent(), FQuat(BoxThatWeHit->GetComponentRotation()),  bHeadShots ? FColor::Red : FColor::Orange, false, 8.f);
+			//	}
+			//}
+
+
             BeamEnd = FireHit.ImpactPoint;
 
             //DrawDebugSphere
@@ -221,6 +232,123 @@ bool ULagCompensationComponent::HitScanServerSideRewind(const TArray<FFramePacka
     }
 
 	return bHit;
+}
+
+
+void ULagCompensationComponent::ProjectileServerScoreRequest_Implementation(ABlasterCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize100& InitialVelocity, float HitTime)
+{
+	if (HitCharacter == nullptr)
+	{
+		return;
+	}
+
+	Character = Character == nullptr ? Cast<ABlasterCharacter>(GetOwner()) : Character;
+	if (Character == nullptr)
+	{
+		return;
+	}
+
+	Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;
+	if (Controller == nullptr)
+	{
+		return;
+	}
+
+	AWeapon* InstigatorWeapon =  Character->GetEquippedWeapon();
+	if (InstigatorWeapon == nullptr)
+	{
+		return;
+	}
+
+	float Damage = 0.f;
+
+	FFramePackage Package = GetFrameToCheck(HitCharacter, HitTime);
+
+	FFramePackage OriginalPackage;
+	CacheBoxPositions(HitCharacter, OriginalPackage);
+	MoveBoxes(Package);
+	EnableCharacterMeshCollision(HitCharacter, ECollisionEnabled::NoCollision);
+
+	UBoxComponent* HeadBox = HitCharacter->HitCollisionBoxes[FName("HitboxHead")];
+	HeadBox->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	HeadBox->SetCollisionResponseToChannel(ECC_HitBox, ECollisionResponse::ECR_Block);
+
+	UWorld* World = GetWorld();
+
+	float Multiplier = 1.f;
+
+	if (Character->GetBuffComponent())
+	{
+		Multiplier = FMath::Max(Multiplier, Character->GetBuffComponent()->GetDamageMultiplier()); // we *could* create a history for this but as SSR will only be used up to max few 100ms, we will leave this for now
+	}
+
+	bool bHit = ProjectileServerSideRewind(TraceStart, InitialVelocity, true);
+
+	if (bHit)
+	{
+		Damage = InstigatorWeapon->GetDamage() * Multiplier; // headshot damage to go here
+	}
+	else
+	{
+		for (auto& HitBoxPair : Package.PackageCharacter->HitCollisionBoxes)
+		{
+			if (HitBoxPair.Value != nullptr)
+			{
+				HitBoxPair.Value->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+				HitBoxPair.Value->SetCollisionResponseToChannel(ECC_HitBox, ECollisionResponse::ECR_Block);
+			}
+		}
+
+		if (HeadBox)
+		{
+			HeadBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		}
+		
+		bHit = ProjectileServerSideRewind(TraceStart, InitialVelocity, true);
+
+		if (bHit)
+		{
+			Damage = InstigatorWeapon->GetDamage() * Multiplier;
+		}
+	}
+
+	if (bHit)
+	{
+		UGameplayStatics::ApplyDamage(HitCharacter, Damage, Controller, InstigatorWeapon, UDamageType::StaticClass());
+	}
+
+	MoveBoxes(Package, true);
+	EnableCharacterMeshCollision(HitCharacter, ECollisionEnabled::QueryAndPhysics);
+}
+
+bool ULagCompensationComponent::ProjectileServerSideRewind(const FVector& TraceStart, const FVector& InitialVelocity, bool bHeadShots)
+{
+	FPredictProjectilePathParams PathParams;
+	PathParams.bTraceWithChannel = true;
+	PathParams.bTraceWithCollision = true;
+	PathParams.DrawDebugTime = 5.f;
+	PathParams.DrawDebugType = EDrawDebugTrace::ForDuration;
+	PathParams.LaunchVelocity = InitialVelocity;
+	PathParams.MaxSimTime = MaxRecordTime;
+	PathParams.ProjectileRadius = 5.f;
+	PathParams.SimFrequency = 15.f;
+	PathParams.StartLocation = TraceStart;
+	PathParams.TraceChannel = ECC_HitBox;
+	PathParams.ActorsToIgnore.Add(GetOwner());
+
+	FPredictProjectilePathResult PathResult;
+	UGameplayStatics::PredictProjectilePath(this, PathParams, PathResult);
+
+	if (PathResult.HitResult.Component.IsValid())
+	{
+		UBoxComponent* BoxThatWeHit = Cast<UBoxComponent>(PathResult.HitResult.Component);
+		if (BoxThatWeHit)
+		{
+			DrawDebugBox(GetWorld(), BoxThatWeHit->GetComponentLocation(), BoxThatWeHit->GetScaledBoxExtent(), FQuat(BoxThatWeHit->GetComponentRotation()),  bHeadShots ? FColor::Red : FColor::Orange, false, 8.f);
+		}
+	}
+
+	return PathResult.HitResult.bBlockingHit;
 }
 
 FFramePackage ULagCompensationComponent::GetFrameToCheck(ABlasterCharacter* HitCharacter, float HitTime)
