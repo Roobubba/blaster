@@ -35,11 +35,9 @@ public:
 	
 	void DisableCrosshairs();
 	
+	void UpdateCarriedAmmo();
 	void UpdateAmmoValues();
 	void UpdateShotgunAmmoValues();
-
-	void ApplyAmmoReload();
-	void ApplyShotgunAmmoReload();
 
 	UFUNCTION(BlueprintCallable)
 	void ShotgunShellReload();
@@ -60,9 +58,8 @@ public:
 	void SetAiming(bool bIsAiming);
 
 	void PickupAmmo(EWeaponType WeaponType, int32 AmmoAmount);
-
-	void SetDamageMultiplier(float DamageMultiplier);
 	
+	UPROPERTY(VisibleAnywhere)
 	bool bLocallyReloading = false;
 
 protected:
@@ -177,6 +174,7 @@ private:
 	*/
 	FTimerHandle FireTimer;
 	
+	UPROPERTY(VisibleAnywhere)
 	bool bCanFire = true;
 
 	void StartFireTimer();
@@ -247,7 +245,7 @@ private:
 
 	void InitializeCarriedAmmo();
 
-	UPROPERTY(ReplicatedUsing = OnRep_CombatState)
+	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_CombatState)
 	ECombatState CombatState = ECombatState::ECS_Unoccupied;
 	
 	UFUNCTION()

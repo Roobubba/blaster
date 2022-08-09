@@ -138,7 +138,8 @@ void AWeapon::OnEquipped()
 	{
 		WeaponMesh->SetEnableGravity(false);
 		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	}	
+	}
+	UE_LOG(LogTemp, Warning, TEXT("Weapon Picked Up. Ammo = %d"), Ammo);
 }
 
 void AWeapon::OnDropped()
@@ -246,17 +247,17 @@ void AWeapon::Fire(const FVector& HitTarget, const int32& Seed)
 
 void AWeapon::Dropped()
 {
-	BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(GetOwner()) : BlasterOwnerCharacter;
-	if (BlasterOwnerCharacter)
-	{
-		BlasterOwnerController = BlasterOwnerController == nullptr ? Cast<ABlasterPlayerController>(BlasterOwnerCharacter->Controller) : BlasterOwnerController;
-		if (BlasterOwnerController)
-		{
-			BlasterOwnerController->SetHUDWeaponType(EWeaponType::EWT_MAX);
-			BlasterOwnerController->SetHUDWeaponAmmo(0);
-			BlasterOwnerController->SetHUDCarriedAmmo(0);
-		}
-	}
+	//BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(GetOwner()) : BlasterOwnerCharacter;
+	//if (BlasterOwnerCharacter)
+	//{
+	//	BlasterOwnerController = BlasterOwnerController == nullptr ? Cast<ABlasterPlayerController>(BlasterOwnerCharacter->Controller) : BlasterOwnerController;
+	//	if (BlasterOwnerController)
+	//	{
+	//		BlasterOwnerController->SetHUDWeaponType(EWeaponType::EWT_MAX);
+	//		BlasterOwnerController->SetHUDWeaponAmmo(0);
+	//		BlasterOwnerController->SetHUDCarriedAmmo(0);
+	//	}
+	//}
 
 	SetWeaponState(EWeaponState::EWS_Dropped);
 	FDetachmentTransformRules DetachRules(EDetachmentRule::KeepWorld, true);
@@ -265,6 +266,10 @@ void AWeapon::Dropped()
 	SetOwner(nullptr);
 	BlasterOwnerCharacter = nullptr;
 	BlasterOwnerController = nullptr;
+	//if (!HasAuthority())
+	//{
+	//	SequenceAmmo = 0;
+	//}
 }
 
 void AWeapon::SetHUDAmmo()
@@ -295,7 +300,7 @@ void AWeapon::SetHUDWeaponType()
 
 void AWeapon::SpendRound()
 {
-	Ammo = FMath::Clamp(Ammo - 1, 0, MagCapacity);
+	Ammo = FMath::Max(Ammo - 1, 0);
 	SetHUDAmmo();
 	if (HasAuthority())
 	{
@@ -314,6 +319,7 @@ void AWeapon::ClientUpdateAmmo_Implementation(int32 ServerAmmo)
 		return;
 	}
 
+	UE_LOG(LogTemp, Warning, TEXT("ClientAmmo called with ServerAmmo = %d and Ammo = %d and SequenceAmmo = %d"), ServerAmmo, Ammo, SequenceAmmo);
 	Ammo = ServerAmmo;
 	--SequenceAmmo;
 	Ammo -= SequenceAmmo;
@@ -334,6 +340,8 @@ void AWeapon::ClientAddAmmo_Implementation(int32 AmmoToAdd)
 		return;
 	}
 
+	UE_LOG(LogTemp, Warning, TEXT("ClientAddAmmo called with AmmoToAdd = %d and Ammo = %d and SequenceAmmo = %d"), AmmoToAdd, Ammo, SequenceAmmo);
+	
 	Ammo = FMath::Clamp(Ammo + AmmoToAdd, 0, MagCapacity);
 	
 	BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(GetOwner()) : BlasterOwnerCharacter;
@@ -360,9 +368,9 @@ void AWeapon::OnRep_Owner()
 		BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(Owner) : BlasterOwnerCharacter;
 		if (BlasterOwnerCharacter && BlasterOwnerCharacter->GetEquippedWeapon() && BlasterOwnerCharacter->GetEquippedWeapon() == this)
 		{
-			//SetHUDAmmo();
+			SetHUDAmmo();
 			//SetHUDWeaponType();
-			BlasterOwnerCharacter->UpdateHUDAmmo();
+			//BlasterOwnerCharacter->UpdateHUDAmmo();
 		}
 	}
 }
