@@ -65,6 +65,12 @@ void AWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AWeapon, WeaponState);
+	DOREPLIFETIME_CONDITION(AWeapon, bUseServerSideRewind, COND_OwnerOnly);
+}
+
+void AWeapon::OnPingTooHigh(bool bPingTooHigh)
+{
+	bUseServerSideRewind = !bPingTooHigh;
 }
 
 void AWeapon::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,	UPrimitiveComponent* OtherComp,	int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -139,7 +145,17 @@ void AWeapon::OnEquipped()
 		WeaponMesh->SetEnableGravity(false);
 		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
-	UE_LOG(LogTemp, Warning, TEXT("Weapon Picked Up. Ammo = %d"), Ammo);
+	//UE_LOG(LogTemp, Warning, TEXT("Weapon Picked Up. Ammo = %d"), Ammo);
+
+	BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(GetOwner()) : BlasterOwnerCharacter;
+	if (BlasterOwnerCharacter && bUseServerSideRewind)
+	{
+		BlasterOwnerController = BlasterOwnerController == nullptr ? Cast<ABlasterPlayerController>(BlasterOwnerCharacter->Controller) : BlasterOwnerController;
+		if (BlasterOwnerController && HasAuthority() && !BlasterOwnerController->HighPingDelegate.IsBound())
+		{
+			BlasterOwnerController->HighPingDelegate.AddDynamic(this, &AWeapon::OnPingTooHigh);	
+		}
+	}
 }
 
 void AWeapon::OnDropped()
@@ -162,6 +178,16 @@ void AWeapon::OnDropped()
 	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	WeaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
 	WeaponMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
+
+	BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(GetOwner()) : BlasterOwnerCharacter;
+	if (BlasterOwnerCharacter && bUseServerSideRewind)
+	{
+		BlasterOwnerController = BlasterOwnerController == nullptr ? Cast<ABlasterPlayerController>(BlasterOwnerCharacter->Controller) : BlasterOwnerController;
+		if (BlasterOwnerController && HasAuthority() && BlasterOwnerController->HighPingDelegate.IsBound())
+		{
+			BlasterOwnerController->HighPingDelegate.RemoveDynamic(this, &AWeapon::OnPingTooHigh);	
+		}
+	}
 }
 
 void AWeapon::OnEquippedSecondary()
@@ -186,6 +212,15 @@ void AWeapon::OnEquippedSecondary()
 			WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_TAN);
 			WeaponMesh->MarkRenderStateDirty();
 			EnableCustomDepth(true);
+		}
+
+		if (bUseServerSideRewind)
+		{
+			BlasterOwnerController = BlasterOwnerController == nullptr ? Cast<ABlasterPlayerController>(BlasterOwnerCharacter->Controller) : BlasterOwnerController;
+			if (BlasterOwnerController && HasAuthority() && BlasterOwnerController->HighPingDelegate.IsBound())
+			{
+				BlasterOwnerController->HighPingDelegate.RemoveDynamic(this, &AWeapon::OnPingTooHigh);	
+			}
 		}
 	}
 
@@ -319,7 +354,7 @@ void AWeapon::ClientUpdateAmmo_Implementation(int32 ServerAmmo)
 		return;
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("ClientAmmo called with ServerAmmo = %d and Ammo = %d and SequenceAmmo = %d"), ServerAmmo, Ammo, SequenceAmmo);
+	//UE_LOG(LogTemp, Warning, TEXT("ClientAmmo called with ServerAmmo = %d and Ammo = %d and SequenceAmmo = %d"), ServerAmmo, Ammo, SequenceAmmo);
 	Ammo = ServerAmmo;
 	--SequenceAmmo;
 	Ammo -= SequenceAmmo;
@@ -340,7 +375,7 @@ void AWeapon::ClientAddAmmo_Implementation(int32 AmmoToAdd)
 		return;
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("ClientAddAmmo called with AmmoToAdd = %d and Ammo = %d and SequenceAmmo = %d"), AmmoToAdd, Ammo, SequenceAmmo);
+	//UE_LOG(LogTemp, Warning, TEXT("ClientAddAmmo called with AmmoToAdd = %d and Ammo = %d and SequenceAmmo = %d"), AmmoToAdd, Ammo, SequenceAmmo);
 	
 	Ammo = FMath::Clamp(Ammo + AmmoToAdd, 0, MagCapacity);
 	

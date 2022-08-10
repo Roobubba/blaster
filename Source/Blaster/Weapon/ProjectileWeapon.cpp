@@ -16,45 +16,80 @@ void AProjectileWeapon::Fire (const FVector& HitTarget, const int32& Seed)
     UWorld* World = GetWorld();
     if (MuzzleFlashSocket && World)
     {
-        FTransform SocketTransform = MuzzleFlashSocket->GetSocketTransform(GetWeaponMesh());
+        const FTransform SocketTransform = MuzzleFlashSocket->GetSocketTransform(GetWeaponMesh());
         
-        FVector ToTarget = VConeProcedural((HitTarget - SocketTransform.GetLocation()).GetSafeNormal(), Spread, 0, Seed);
+        const FVector ToTarget = VConeProcedural((HitTarget - SocketTransform.GetLocation()).GetSafeNormal(), Spread, 0, Seed);
 
-        FRotator TargetRotation = ToTarget.Rotation();
+        const FRotator TargetRotation = ToTarget.Rotation();
 
         FActorSpawnParameters SpawnParams;
         SpawnParams.Owner = GetOwner();
         SpawnParams.Instigator = InstigatorPawn;
 
-        if (!InstigatorPawn->HasAuthority() && !bUseServerSideRewind)
+        TSubclassOf<AProjectile> ProjectileClassToSpawn;
+        bool bUseSSR = false;
+        
+        if (bUseServerSideRewind)
         {
-            return;
+            if (InstigatorPawn->HasAuthority())
+            {
+                if (InstigatorPawn->IsLocallyControlled())
+                {
+                    ProjectileClassToSpawn = ProjectileClass;
+                    bUseSSR = false; 
+                }
+                else
+                {
+                    ProjectileClassToSpawn = ServerSideRewindProjectileClass;
+                    bUseSSR = true;
+                }
+            }
+            else
+            {
+                if (InstigatorPawn->IsLocallyControlled())
+                {
+                    ProjectileClassToSpawn = ServerSideRewindProjectileClass;
+                    bUseSSR = true;
+                }
+                else
+                {
+                    ProjectileClassToSpawn = ServerSideRewindProjectileClass;
+                    bUseSSR = false;
+                }
+            }
         }
-
-        TSubclassOf<AProjectile> ProjectileClassToSpawn = (InstigatorPawn->HasAuthority() && InstigatorPawn->IsLocallyControlled() && bUseServerSideRewind) ? ProjectileClass : ServerSideRewindProjectileClass;
-        
-        if (!ProjectileClassToSpawn) return;
-
-        bool bUseSSR = (InstigatorPawn->HasAuthority() != InstigatorPawn->IsLocallyControlled()) && bUseServerSideRewind;
-        
-        AProjectile* SpawnedProjectile = nullptr; 
-        SpawnedProjectile = World->SpawnActor<AProjectile>
-            (
-                ProjectileClassToSpawn,
-                SocketTransform.GetLocation(),
-                TargetRotation,
-                SpawnParams
-            );
-
-        ABlasterCharacter* Character = Cast<ABlasterCharacter>(GetOwner());
-        if (Character && SpawnedProjectile && Character->GetBuffComponent())
+        else if (InstigatorPawn->HasAuthority())
         {
-            SpawnedProjectile->bUseServerSideRewind = bUseSSR;
-            SpawnedProjectile->TraceStart = SocketTransform.GetLocation();
-            SpawnedProjectile->InitialVelocity = ToTarget * SpawnedProjectile->InitialSpeed;
+            ProjectileClassToSpawn = ProjectileClass;
+            bUseSSR = false;
+        }
+        
+        if (ProjectileClassToSpawn)
+        {
+            SpawnProjectile(ProjectileClassToSpawn, SocketTransform.GetLocation(), TargetRotation, ToTarget, SpawnParams, bUseSSR);
+        }
+    }
+}
 
-            float Multiplier = (Character->GetBuffComponent()->GetDamageMultiplier() > 1.f) ? Character->GetBuffComponent()->GetDamageMultiplier() : 1.f;
-            SpawnedProjectile->Damage = GetDamage() * Multiplier;
-        } 
+void AProjectileWeapon::SpawnProjectile(const TSubclassOf<AProjectile>& ProjectileClassToSpawn, const FVector& Location, const FRotator& TargetRotation, const FVector& ToTarget, const FActorSpawnParameters& SpawnParams, const bool& bUseSSR)
+{
+    AProjectile* SpawnedProjectile = nullptr; 
+    SpawnedProjectile = GetWorld()->SpawnActor<AProjectile>
+        (
+            ProjectileClassToSpawn,
+            Location,
+            TargetRotation,
+            SpawnParams
+        );
+
+    ABlasterCharacter* Character = Cast<ABlasterCharacter>(GetOwner());
+    if (Character && SpawnedProjectile && Character->GetBuffComponent())
+    {
+        SpawnedProjectile->bUseServerSideRewind = bUseSSR;
+        SpawnedProjectile->TraceStart = Location;
+        SpawnedProjectile->InitialVelocity = ToTarget * SpawnedProjectile->InitialSpeed;
+
+        float Multiplier = (Character->GetBuffComponent()->GetDamageMultiplier() > 1.f) ? Character->GetBuffComponent()->GetDamageMultiplier() : 1.f;
+        SpawnedProjectile->Damage = GetDamage() * Multiplier;
     }
 }

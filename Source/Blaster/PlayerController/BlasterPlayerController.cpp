@@ -54,10 +54,16 @@ void ABlasterPlayerController::CheckPing(float DeltaTime)
         PlayerState = PlayerState == nullptr ? GetPlayerState<APlayerState>() : PlayerState;
         if (PlayerState)
         {
+            UE_LOG(LogTemp, Warning, TEXT("PlayerState->GetPingInMilliseconds() = %f"), PlayerState->GetPingInMilliseconds());
             if (PlayerState->GetPingInMilliseconds() > HighPingThreshold)
             {
                 HighPingWarning();
                 HighPingAnimationRunningTime = 0.f;
+                ServerReportPingStatus(true);
+            }
+            else
+            {
+                ServerReportPingStatus(false);
             }
         }
 
@@ -72,6 +78,12 @@ void ABlasterPlayerController::CheckPing(float DeltaTime)
             StopHighPingWarning();
         }
     }
+}
+
+// If the ping is too high, we will turn off bUseServerSideRewind
+void ABlasterPlayerController::ServerReportPingStatus_Implementation(bool bPingTooHigh)
+{
+    HighPingDelegate.Broadcast(bPingTooHigh);
 }
 
 void ABlasterPlayerController::CheckTimeSync(float DeltaTime)

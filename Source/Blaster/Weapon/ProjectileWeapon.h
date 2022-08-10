@@ -23,4 +23,6 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<AProjectile> ServerSideRewindProjectileClass;
+
+	void SpawnProjectile(const TSubclassOf<AProjectile>& ProjectileClassToSpawn, const FVector& Location, const FRotator& TargetRotation, const FVector& ToTarget, const FActorSpawnParameters& SpawnParams, const bool& bUseSSR);
 };

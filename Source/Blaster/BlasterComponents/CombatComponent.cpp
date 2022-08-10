@@ -713,8 +713,6 @@ void UCombatComponent::LocalFire(const FVector_NetQuantize& TraceHitTarget, cons
 		return;
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("LocalFire called"));
-
 	if (Character && (CombatState == ECombatState::ECS_Reloading || CombatState == ECombatState::ECS_Unoccupied) && EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun)
 	{
 		bLocallyReloading = false;

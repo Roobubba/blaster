@@ -57,56 +57,54 @@ void AHitScanWeapon::Fire(const FVector& HitTarget, const int32& Seed)
             }
 
             float Multiplier = 1.f;
+            
+            BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(OwnerPawn) : BlasterOwnerCharacter;
 
-            ABlasterCharacter* OwnerCharacter = Cast<ABlasterCharacter>(GetOwner());
-            if (OwnerCharacter && OwnerCharacter->GetBuffComponent())
+            if (BlasterOwnerCharacter && BlasterOwnerCharacter->GetBuffComponent())
             {
-                Multiplier = FMath::Max(Multiplier, OwnerCharacter->GetBuffComponent()->GetDamageMultiplier());
+                Multiplier = FMath::Max(Multiplier, BlasterOwnerCharacter->GetBuffComponent()->GetDamageMultiplier());
             }
 
-            if (InstigatorController)
+            TMap<ABlasterCharacter*, float> DamageMap;
+            for (int i = 0; i < PelletCount; i++)
             {
-                TMap<ABlasterCharacter*, float> DamageMap;
-                for (int i = 0; i < PelletCount; i++)
-                {
-                    HitScan(Start, HitTarget, DamageMap, Multiplier, (uint32) i, Seed);
-                }
+                HitScan(Start, HitTarget, DamageMap, Multiplier, (uint32) i, Seed);
+            }
 
-                bool bCauseAuthDamage = !bUseServerSideRewind || OwnerPawn->IsLocallyControlled();
+            bool bCauseAuthDamage = !bUseServerSideRewind || OwnerPawn->IsLocallyControlled();
 
-                if (HasAuthority() && bCauseAuthDamage)
+            if (HasAuthority() && bCauseAuthDamage && InstigatorController)
+            {
+                for(auto& DamageEvent : DamageMap)
                 {
-                    for(auto& DamageEvent : DamageMap)
+                    if (DamageEvent.Key)
                     {
-                        if (DamageEvent.Key)
-                        {
-                            UGameplayStatics::ApplyDamage(DamageEvent.Key, DamageEvent.Value, InstigatorController, this, UDamageType::StaticClass());
-                        }
+                        UGameplayStatics::ApplyDamage(DamageEvent.Key, DamageEvent.Value, InstigatorController, this, UDamageType::StaticClass());
                     }
                 }
+            }
 
-                if (!HasAuthority() && bUseServerSideRewind && OwnerPawn->IsLocallyControlled())
+            if (!HasAuthority() && bUseServerSideRewind && BlasterOwnerCharacter->IsLocallyControlled())
+            {
+                
+                BlasterOwnerController = BlasterOwnerController == nullptr ? Cast<ABlasterPlayerController>(InstigatorController) : BlasterOwnerController;
+                if (BlasterOwnerCharacter && BlasterOwnerController && BlasterOwnerCharacter->GetLagCompensation())
                 {
-                    BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(OwnerPawn) : BlasterOwnerCharacter;
-                    BlasterOwnerController = BlasterOwnerController == nullptr ? Cast<ABlasterPlayerController>(InstigatorController) : BlasterOwnerController;
-                    if (BlasterOwnerCharacter && BlasterOwnerController && BlasterOwnerCharacter->GetLagCompensation())
+                    TArray<ABlasterCharacter*> HitCharacters;
+                    DamageMap.GenerateKeyArray(HitCharacters);
+                    if (HitCharacters.Num() > 0)
                     {
-                        TArray<ABlasterCharacter*> HitCharacters;
-                        DamageMap.GenerateKeyArray(HitCharacters);
-                        if (HitCharacters.Num() > 0)
-                        {
-                            BlasterOwnerCharacter->GetLagCompensation()->ServerScoreRequest
-                            (
-                                HitCharacters,
-                                Start,
-                                HitTarget,
-                                BlasterOwnerController->GetServerTime() - BlasterOwnerController->SingleTripTime,
-                                PelletCount,
-                                Seed
-                            );
-                        }
-                                
+                        BlasterOwnerCharacter->GetLagCompensation()->ServerScoreRequest
+                        (
+                            HitCharacters,
+                            Start,
+                            HitTarget,
+                            BlasterOwnerController->GetServerTime() - BlasterOwnerController->SingleTripTime,
+                            PelletCount,
+                            Seed
+                        );
                     }
+                            
                 }
             }
         }
