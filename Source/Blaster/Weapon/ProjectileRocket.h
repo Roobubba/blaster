@@ -48,5 +48,4 @@ private:
 
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
 	float OuterDamageRadius = 500.f;
-
 };

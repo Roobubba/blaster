@@ -46,5 +46,4 @@ private:
 
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
 	float ExplodeTime = 2.f;
-
 };

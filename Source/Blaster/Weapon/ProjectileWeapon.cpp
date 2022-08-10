@@ -26,14 +26,18 @@ void AProjectileWeapon::Fire (const FVector& HitTarget, const int32& Seed)
         SpawnParams.Owner = GetOwner();
         SpawnParams.Instigator = InstigatorPawn;
 
-        AProjectile* SpawnedProjectile = nullptr; 
+        if (!InstigatorPawn->HasAuthority() && !bUseServerSideRewind)
+        {
+            return;
+        }
 
         TSubclassOf<AProjectile> ProjectileClassToSpawn = (InstigatorPawn->HasAuthority() && InstigatorPawn->IsLocallyControlled() && bUseServerSideRewind) ? ProjectileClass : ServerSideRewindProjectileClass;
         
         if (!ProjectileClassToSpawn) return;
 
         bool bUseSSR = (InstigatorPawn->HasAuthority() != InstigatorPawn->IsLocallyControlled()) && bUseServerSideRewind;
-
+        
+        AProjectile* SpawnedProjectile = nullptr; 
         SpawnedProjectile = World->SpawnActor<AProjectile>
             (
                 ProjectileClassToSpawn,
