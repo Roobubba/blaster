@@ -575,13 +575,38 @@ void ABlasterCharacter::PlayThrowGrenadeMontage()
 	}
 }
 
+void ABlasterCharacter::PlaySwapMontage()
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+
+	if (AnimInstance && SwapMontage)
+	{
+		AnimInstance->Montage_Play(SwapMontage);
+	}
+}
+
 void ABlasterCharacter::EquipButtonPressed()
 {
 	if (bDisableGameplay) return;
 
 	if (CombatComponent)
 	{
-		ServerEquipButtonPressed();
+		if (CombatComponent->CombatState == ECombatState::ECS_Unoccupied)
+		{
+			ServerEquipButtonPressed();
+		}
+
+		bool bSwap = CombatComponent->ShouldSwapWeapons() &&
+			!HasAuthority() && 
+			CombatComponent->CombatState == ECombatState::ECS_Unoccupied &&
+			OverlappingWeapon == nullptr;
+
+		if (bSwap)
+		{
+			PlaySwapMontage();
+			CombatComponent->CombatState = ECombatState::ECS_SwappingWeapon;
+			bFinishedSwapping = false;
+		}
 	}
 }
 

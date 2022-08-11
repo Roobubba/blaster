@@ -148,12 +148,18 @@ void AWeapon::OnEquipped()
 	//UE_LOG(LogTemp, Warning, TEXT("Weapon Picked Up. Ammo = %d"), Ammo);
 
 	BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(GetOwner()) : BlasterOwnerCharacter;
-	if (BlasterOwnerCharacter && bUseServerSideRewind)
+
+	if (BlasterOwnerCharacter)
 	{
-		BlasterOwnerController = BlasterOwnerController == nullptr ? Cast<ABlasterPlayerController>(BlasterOwnerCharacter->Controller) : BlasterOwnerController;
-		if (BlasterOwnerController && HasAuthority() && !BlasterOwnerController->HighPingDelegate.IsBound())
+		BlasterOwnerCharacter->UpdateHUDAmmo();
+
+		if (bUseServerSideRewind)
 		{
-			BlasterOwnerController->HighPingDelegate.AddDynamic(this, &AWeapon::OnPingTooHigh);	
+			BlasterOwnerController = BlasterOwnerController == nullptr ? Cast<ABlasterPlayerController>(BlasterOwnerCharacter->Controller) : BlasterOwnerController;
+			if (BlasterOwnerController && HasAuthority() && !BlasterOwnerController->HighPingDelegate.IsBound())
+			{
+				BlasterOwnerController->HighPingDelegate.AddDynamic(this, &AWeapon::OnPingTooHigh);	
+			}
 		}
 	}
 }
@@ -211,7 +217,7 @@ void AWeapon::OnEquippedSecondary()
 		{
 			WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_TAN);
 			WeaponMesh->MarkRenderStateDirty();
-			EnableCustomDepth(true);
+			//EnableCustomDepth(true);
 		}
 
 		if (bUseServerSideRewind)
