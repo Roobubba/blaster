@@ -198,7 +198,7 @@ void ABlasterCharacter::Destroyed()
 		ElimBotComponent->DestroyComponent();
 	}
 
-	ABlasterGameMode* BlasterGameMode = Cast<ABlasterGameMode>(UGameplayStatics::GetGameMode(this));
+	BlasterGameMode = BlasterGameMode == nullptr ? Cast<ABlasterGameMode>(UGameplayStatics::GetGameMode(this)) : BlasterGameMode;
 	bool bMatchNotInProgress = BlasterGameMode && BlasterGameMode->GetMatchState() != MatchState::InProgress;
 
 	if (CombatComponent && CombatComponent->EquippedWeapon && bMatchNotInProgress)
@@ -290,30 +290,16 @@ void ABlasterCharacter::RotateInPlace(float DeltaTime)
 	}
 }
 
-void ABlasterCharacter::Eliminate()
+void ABlasterCharacter::Eliminate(bool bPlayerLeftGame)
 {
-
 	DropOrDestroyWeapons();
-	MulticastEliminate();
-	GetWorldTimerManager().SetTimer(
-		EliminateTimer,
-		this,
-		&ABlasterCharacter::EliminateTimerFinished,
-		EliminateDelay
-	);
+	MulticastEliminate(bPlayerLeftGame);
 }
 
-void ABlasterCharacter::EliminateTimerFinished()
+void ABlasterCharacter::MulticastEliminate_Implementation(bool bPlayerLeftGame)
 {
-	ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>();
-	if (BlasterGameMode)
-	{
-		BlasterGameMode->RequestRespawn(this, Controller);
-	}
-}
+	bLeftGame = bPlayerLeftGame;
 
-void ABlasterCharacter::MulticastEliminate_Implementation()
-{
 	if (BlasterPlayerController)
 	{
 		BlasterPlayerController->SetHUDWeaponType(EWeaponType::EWT_MAX);
@@ -376,6 +362,38 @@ void ABlasterCharacter::MulticastEliminate_Implementation()
 	if (bHideSniperScope)
 	{
 		ShowSniperScopeWidget(false);
+	}
+	
+	GetWorldTimerManager().SetTimer(
+		EliminateTimer,
+		this,
+		&ABlasterCharacter::EliminateTimerFinished,
+		EliminateDelay
+	);
+}
+
+void ABlasterCharacter::EliminateTimerFinished()
+{
+	BlasterGameMode = BlasterGameMode == nullptr ? GetWorld()->GetAuthGameMode<ABlasterGameMode>() : BlasterGameMode;
+	if (BlasterGameMode && !bLeftGame)
+	{
+		BlasterGameMode->RequestRespawn(this, Controller);
+	}
+	
+	if (bLeftGame && IsLocallyControlled())
+	{
+		OnLeftGame.Broadcast();
+	}
+}
+
+void ABlasterCharacter::ServerLeaveGame_Implementation()
+{
+	BlasterGameMode = BlasterGameMode == nullptr ? Cast<ABlasterGameMode>(UGameplayStatics::GetGameMode(this)) : BlasterGameMode;
+	BlasterPlayerState = BlasterPlayerState == nullptr ? GetPlayerState<ABlasterPlayerState>() : BlasterPlayerState;
+
+	if (BlasterGameMode && BlasterPlayerState)
+	{
+		BlasterGameMode->PlayerLeftGame(BlasterPlayerState);
 	}
 }
 
@@ -461,7 +479,7 @@ void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const 
 
 	if (Health <= 0.f)
 	{
-		ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>();
+		BlasterGameMode = BlasterGameMode == nullptr ? Cast<ABlasterGameMode>(UGameplayStatics::GetGameMode(this)) : BlasterGameMode;
 		if (BlasterGameMode)
 		{
 			BlasterPlayerController = BlasterPlayerController == nullptr ? Cast<ABlasterPlayerController>(Controller) : BlasterPlayerController;
@@ -782,7 +800,7 @@ void ABlasterCharacter::ToggleWeaponsIfCameraClose(bool bShowWeapons)
 
 void ABlasterCharacter::SpawnDefaultWeapon()
 {
-	ABlasterGameMode* BlasterGameMode = Cast<ABlasterGameMode>(UGameplayStatics::GetGameMode(this));
+	BlasterGameMode = BlasterGameMode == nullptr ? Cast<ABlasterGameMode>(UGameplayStatics::GetGameMode(this)) : BlasterGameMode;
 	if (BlasterGameMode)
 	{
 		UWorld* World = GetWorld();

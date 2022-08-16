@@ -91,8 +91,8 @@ protected:
 
 	void LocalFire(const FVector_NetQuantize& TraceHitTarget, const int32& Seed);
 
-	UFUNCTION(Server, Reliable)
-	void ServerFire(const FVector_NetQuantize& TraceHitTarget, const int32& Seed);
+	UFUNCTION(Server, Reliable, WithValidation)
+	void ServerFire(const FVector_NetQuantize& TraceHitTarget, const int32& Seed, float FireDelay);
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastFire(const FVector_NetQuantize& TraceHitTarget, const int32& Seed);

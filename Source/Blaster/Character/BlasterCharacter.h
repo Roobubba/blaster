@@ -10,6 +10,7 @@
 #include "Blaster/BlasterTypes/CombatState.h"
 #include "BlasterCharacter.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnLeftGame);
 
 UCLASS()
 class BLASTER_API ABlasterCharacter : public ACharacter, public IInteractWithCrosshairsInterface
@@ -33,10 +34,15 @@ public:
 	void PlayThrowGrenadeMontage();
 	void PlaySwapMontage();
 	
-	void Eliminate();
+	void Eliminate(bool bPlayerLeftGame);
 
 	UFUNCTION(NetMulticast, Reliable)
-	void MulticastEliminate();
+	void MulticastEliminate(bool bPlayerLeftGame);
+
+	UFUNCTION(Server, Reliable)
+	void ServerLeaveGame();
+
+	FOnLeftGame OnLeftGame;
 
 	UPROPERTY(Replicated)
 	bool bDisableGameplay = false;
@@ -254,6 +260,9 @@ private:
 
 	UPROPERTY()
 	class ABlasterPlayerState* BlasterPlayerState;
+	
+	UPROPERTY()
+	class ABlasterGameMode* BlasterGameMode;
 
 	bool bEliminated = false;
 
@@ -263,6 +272,8 @@ private:
 	FTimerHandle EliminateTimer;
 
 	void EliminateTimerFinished();
+
+	bool bLeftGame = false;
 
 	/*
 		Dissolve effect

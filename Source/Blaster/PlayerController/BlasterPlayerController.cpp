@@ -18,6 +18,7 @@
 #include "Styling/SlateColor.h"
 #include "Camera/CameraComponent.h"
 #include "Components/Image.h"
+#include "Blaster/HUD/ReturnToMainMenu.h"
 
 void ABlasterPlayerController::BeginPlay()
 {
@@ -44,6 +45,45 @@ void ABlasterPlayerController::Tick(float DeltaTime)
     PollInit();
 
     CheckPing(DeltaTime);
+}
+
+void ABlasterPlayerController::SetupInputComponent()
+{
+    Super::SetupInputComponent();
+    if (InputComponent == nullptr)
+    {
+        return;
+    }
+
+    InputComponent->BindAction("Quit", IE_Pressed, this, &ABlasterPlayerController::ShowReturnToMainMenu);
+}
+
+void ABlasterPlayerController::ShowReturnToMainMenu()
+{
+    //TODO: Show the Return To Main Menu Widget
+    if (ReturnToMainMenuWidget == nullptr)
+    {
+        return;
+    }
+
+    if (ReturnToMainMenu == nullptr)
+    {
+        ReturnToMainMenu = CreateWidget<UReturnToMainMenu>(this, ReturnToMainMenuWidget);
+    }
+
+    if (ReturnToMainMenu)
+    {
+        bReturnToMainMenuOpen = !bReturnToMainMenuOpen;
+        if(bReturnToMainMenuOpen)
+        {
+            ReturnToMainMenu->MenuSetup();
+        }
+        else
+        {
+            ReturnToMainMenu->MenuTearDown();
+        }
+    }
+     
 }
 
 void ABlasterPlayerController::CheckPing(float DeltaTime)

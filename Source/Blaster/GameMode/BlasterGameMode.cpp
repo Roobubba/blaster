@@ -72,16 +72,6 @@ void ABlasterGameMode::OnMatchStateSet()
     {
         LevelStartingTime = GetWorld()->GetTimeSeconds();
     }
-
-    //APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
-    //if (PlayerController)
-    //{
-    //    ABlasterPlayerController* BlasterPlayer = Cast<ABlasterPlayerController>(PlayerController);
-    //    if (BlasterPlayer)
-    //    {
-    //        BlasterPlayer->ServerGetMatchState();
-    //    }
-    //}
     
     for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); Iterator; ++Iterator)
     {
@@ -89,7 +79,6 @@ void ABlasterGameMode::OnMatchStateSet()
         if (BlasterPlayer)
         {
             BlasterPlayer->ServerGetMatchState();
-            //BlasterPlayer->OnMatchStateSet(MatchState);
         }
     }
 }
@@ -113,7 +102,7 @@ void ABlasterGameMode::PlayerEliminated(ABlasterCharacter* VictimCharacter, ABla
 
     if (VictimCharacter)
     {
-        VictimCharacter->Eliminate();
+        VictimCharacter->Eliminate(false);
     }
 }
 
@@ -131,5 +120,25 @@ void ABlasterGameMode::RequestRespawn(ACharacter* EliminatedCharacter, AControll
         UGameplayStatics::GetAllActorsOfClass(this, APlayerStart::StaticClass(), PlayerStarts);
         int32 Selection = FMath::RandRange(0, PlayerStarts.Num() - 1);
         RestartPlayerAtPlayerStart(EliminatedController, PlayerStarts[Selection]);
+    }
+}
+
+void ABlasterGameMode::PlayerLeftGame(ABlasterPlayerState* PlayerLeaving)
+{
+    if (PlayerLeaving == nullptr)
+    {
+        return;
+    }
+
+    ABlasterGameState* BlasterGameState = GetGameState<ABlasterGameState>();
+    if (BlasterGameState && BlasterGameState->TopScoringPlayers.Contains(PlayerLeaving))
+    {
+        BlasterGameState->TopScoringPlayers.Remove(PlayerLeaving);
+    }
+
+    ABlasterCharacter* CharacterLeaving = Cast<ABlasterCharacter>(PlayerLeaving->GetPawn());
+    if (CharacterLeaving)
+    {
+        CharacterLeaving->Eliminate(true);
     }
 }

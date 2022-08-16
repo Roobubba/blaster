@@ -673,7 +673,7 @@ void UCombatComponent::Fire()
 				LocalFire(HitTarget, Seed);
 			}
 			
-			ServerFire(HitTarget, Seed);
+			ServerFire(HitTarget, Seed, EquippedWeapon->GetFireDelay());
 
 			//switch(EquippedWeapon->FireType)
 			//{
@@ -723,9 +723,20 @@ void UCombatComponent::FireTimerFinished()
 	ReloadEmptyWeapon();
 }
 
-void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& TraceHitTarget, const int32& Seed)
+void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& TraceHitTarget, const int32& Seed, float FireDelay)
 {
 	MulticastFire(TraceHitTarget, Seed);
+}
+
+bool UCombatComponent::ServerFire_Validate(const FVector_NetQuantize& TraceHitTarget, const int32& Seed, float FireDelay)
+{
+	if (EquippedWeapon)
+	{
+		bool bNearlyEqual = FMath::IsNearlyEqual(EquippedWeapon->GetFireDelay(), FireDelay, 0.001f);
+		return bNearlyEqual;
+	}
+
+	return true;
 }
 
 void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& TraceHitTarget, const int32& Seed)
