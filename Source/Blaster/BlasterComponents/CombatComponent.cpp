@@ -8,7 +8,6 @@
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "DrawDebugHelpers.h"
 #include "Blaster/PlayerController/BlasterPlayerController.h"
 #include "Sound/SoundCue.h"
 #include "Camera/CameraComponent.h"
@@ -281,8 +280,15 @@ void UCombatComponent::EquipPrimaryWeapon(AWeapon* WeaponToEquip)
 	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
 	AttachActorToRightHand(EquippedWeapon);
 	EquippedWeapon->SetOwner(Character);
-	EquippedWeapon->SetHUDAmmo();
-	EquippedWeapon->SetHUDWeaponType();
+	//EquippedWeapon->SetHUDAmmo();
+	//EquippedWeapon->SetHUDWeaponType();
+	Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;
+	if (Controller)
+	{
+		Controller->SetHUDWeaponAmmo(EquippedWeapon->GetAmmo());
+		Controller->SetHUDWeaponType(EquippedWeapon->GetWeaponType());
+	}
+	
 	UpdateCarriedAmmo();
 	PlayEquipWeaponSound(EquippedWeapon);
 	ReloadEmptyWeapon();
@@ -389,8 +395,13 @@ void UCombatComponent::OnRep_EquippedWeapon()
 		PlayEquipWeaponSound(EquippedWeapon);
 		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 		Character->bUseControllerRotationYaw = true;
-		EquippedWeapon->SetHUDAmmo();
-		EquippedWeapon->SetHUDWeaponType();
+		//EquippedWeapon->SetHUDAmmo();
+		Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;
+		if (Controller)
+		{
+			Controller->SetHUDWeaponAmmo(EquippedWeapon->GetAmmo());
+			Controller->SetHUDWeaponType(EquippedWeapon->GetWeaponType());
+		}
 	}
 }
 
@@ -933,11 +944,8 @@ bool UCombatComponent::CanFire()
 {
 	if (EquippedWeapon == nullptr)
 	{
-		//UE_LOG(LogTemp, Warning, TEXT("CanFire() FALSE - EquippedWeapon is nullptr"));
 		return false;
 	}
-
-	//FString WeaponEmpty = FString(EquippedWeapon->GetIsEmpty() ? "EMPTY" : "NOT EMPTY");
 
 	if (!EquippedWeapon->GetIsEmpty() && EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun && bCanFire && (CombatState == ECombatState::ECS_Reloading || CombatState == ECombatState::ECS_Unoccupied))
 	{

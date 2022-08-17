@@ -12,7 +12,6 @@
 #include "Blaster/BlasterComponents/CombatComponent.h"
 #include "Blaster/Blaster.h"
 #include "Blaster/BlasterComponents/LagCompensationComponent.h"
-#include "DrawDebugHelpers.h"
 
 void AHitScanWeapon::Fire(const FVector& HitTarget, const int32& Seed)
 {
@@ -135,27 +134,17 @@ void AHitScanWeapon::HitScan(const FVector& TraceStart, const FVector& HitTarget
         if (FireHit.bBlockingHit)
         {
             BeamEnd = FireHit.ImpactPoint;
-
-            //DrawDebugSphere
-            //(
-            //    World,
-            //    BeamEnd,
-            //    16.f,
-            //    12,
-            //    FColor::Orange,
-            //    true
-            //);
         
             ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(FireHit.GetActor());
             if (BlasterCharacter)
             {
                 if (DamageMap.Contains(BlasterCharacter))
                 {
-                    DamageMap[BlasterCharacter] += Damage * DamageMultiplier;
+                    DamageMap[BlasterCharacter] += DamageMultiplier * (Damage + (FireHit.BoneName.ToString() == FString("head") ? HeadShotDamage :  0.f));
                 }
                 else
                 {
-                    DamageMap.Emplace(BlasterCharacter, Damage * DamageMultiplier);
+                    DamageMap.Emplace(BlasterCharacter, DamageMultiplier * (Damage + (FireHit.BoneName.ToString() == FString("head") ? HeadShotDamage :  0.f)));
                 }
             }
             else if (HasAuthority())

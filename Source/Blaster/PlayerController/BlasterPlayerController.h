@@ -33,6 +33,7 @@ public:
 	void SetHUDDefeats(int32 Defeats);
 
 	void AnnounceElim();
+	void BroadcastElimination(APlayerState* Attacker, APlayerState* Victim);
 
 	virtual void OnPossess(APawn* InPawn) override;
 
@@ -91,6 +92,9 @@ protected:
 	void StopHighPingWarning();
 	void CheckPing(float DeltaTime);
 	void ShowReturnToMainMenu();
+
+	UFUNCTION(Client, Reliable)
+	void ClientEliminationAnnouncement(APlayerState* Attacker, APlayerState* Victim);
 
 private:
 

@@ -70,7 +70,7 @@ protected:
 	void SaveFramePackage();
 
 	bool HitScanServerSideRewind(const FVector& TraceStart, const FVector& HitTarget, TMap<ABlasterCharacter*, float> &DamageMap, const float& DamageMultiplier, const uint32& PelletNum, const uint32& Seed, const UWorld* World, const class AWeapon* InstigatorWeapon, bool bHeadShots = false);
-	bool ProjectileServerSideRewind(const FVector& TraceStart, const FVector& InitialVelocity, bool bHeadShots = false);
+	bool ProjectileServerSideRewind(const FVector& TraceStart, const FVector& InitialVelocity);
 	
 	FFramePackage GetFrameToCheck(ABlasterCharacter* HitCharacter, float HitTime);
 

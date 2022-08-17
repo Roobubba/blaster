@@ -238,6 +238,5 @@ void UMenu::OnDestroySession(bool bWasSuccessful)
                 FString(TEXT("Destroy Session returned Failure"))
             );
         }
-
     }
 }

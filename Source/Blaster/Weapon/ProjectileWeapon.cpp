@@ -89,7 +89,7 @@ void AProjectileWeapon::SpawnProjectile(const TSubclassOf<AProjectile>& Projecti
         SpawnedProjectile->TraceStart = Location;
         SpawnedProjectile->InitialVelocity = ToTarget * SpawnedProjectile->InitialSpeed;
 
-        float Multiplier = (Character->GetBuffComponent()->GetDamageMultiplier() > 1.f) ? Character->GetBuffComponent()->GetDamageMultiplier() : 1.f;
-        SpawnedProjectile->Damage = GetDamage() * Multiplier;
+        SpawnedProjectile->Damage = GetDamage();
+        SpawnedProjectile->HeadShotDamage = GetHeadShotDamage();
     }
 }

@@ -121,6 +121,9 @@ protected:
 	
 	UPROPERTY(EditAnywhere)
 	float Damage = 20.f;
+	
+	UPROPERTY(EditAnywhere)
+	float HeadShotDamage = 20.f;
 
 	UPROPERTY(Replicated, EditAnywhere)
 	bool bUseServerSideRewind = false;
@@ -196,5 +199,6 @@ public:
 	float HashFloatZeroToOne(const uint32& Input, const uint32& Seed) const;
 	FVector VConeProcedural(FVector const& Dir, float ConeHalfAngleDeg, const uint32& PelletNum, const uint32& Seed) const;
 	FORCEINLINE float GetDamage() const { return Damage; }
+	FORCEINLINE float GetHeadShotDamage() const { return HeadShotDamage; }
 	FORCEINLINE float GetSpread() const { return Spread; }
 };

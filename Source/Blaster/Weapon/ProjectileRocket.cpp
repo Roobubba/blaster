@@ -8,6 +8,8 @@
 #include "Components/AudioComponent.h"
 #include "RocketMovementComponent.h"
 #include "Blaster/Blaster.h"
+#include "Blaster/Character/BlasterCharacter.h"
+#include "Blaster/BlasterComponents/BuffComponent.h"
 
 AProjectileRocket::AProjectileRocket()
 {
@@ -74,7 +76,6 @@ void AProjectileRocket::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, 
 {
     if (OtherActor == GetOwner())
     {
-        //UE_LOG(LogTemp, Warning, TEXT("Hit self"));
         return;
     }
 
@@ -85,10 +86,20 @@ void AProjectileRocket::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, 
 
         if (FiringController)
         {
+
+            float Multiplier = 1.f;
+            
+            ABlasterCharacter* OwnerCharacter = Cast<ABlasterCharacter>(FiringPawn);
+
+            if (OwnerCharacter && OwnerCharacter->GetBuffComponent())
+            {
+                Multiplier = FMath::Max(Multiplier, OwnerCharacter->GetBuffComponent()->GetDamageMultiplier());
+            }
+
             UGameplayStatics::ApplyRadialDamageWithFalloff(
                 this,
-                Damage,
-                Damage / 4.f,
+                Damage * Multiplier,
+                (Damage * Multiplier) * 0.25f,
                 GetActorLocation(),
                 InnerDamageRadius,
                 OuterDamageRadius,
@@ -98,6 +109,8 @@ void AProjectileRocket::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, 
                 this,
                 FiringController
             );
+
+            ApplyPhysicsImpulses(Multiplier);
         }
     }
 
@@ -106,8 +119,6 @@ void AProjectileRocket::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, 
     StartDestroyTimer();
 
     Super::OnHit(HitComp, OtherActor, OtherComp, NormalImpulse, Hit);
-
-    ApplyPhysicsImpulses();
 
     if (ProjectileMesh)
     {
@@ -130,7 +141,7 @@ void AProjectileRocket::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, 
     }
 }
 
-void AProjectileRocket::ApplyPhysicsImpulses()
+void AProjectileRocket::ApplyPhysicsImpulses(float DamageMultiplier)
 {
     if (HasAuthority())
     {
@@ -166,7 +177,7 @@ void AProjectileRocket::ApplyPhysicsImpulses()
                 {
                     FVector ImpulseDirection = HitActor->GetActorLocation() - GetActorLocation();
                     float Force = 0.5f * PhysicsImpactForce * (1.f - FMath::Clamp((ImpulseDirection.Size() - InnerDamageRadius) / (2.f * OuterDamageRadius - InnerDamageRadius), 0.f, 1.f));
-                    PrimitiveComponents[0]->AddImpulse(ImpulseDirection.GetSafeNormal() * Force);
+                    PrimitiveComponents[0]->AddImpulse(ImpulseDirection.GetSafeNormal() * Force * DamageMultiplier);
                 }
             }
         }

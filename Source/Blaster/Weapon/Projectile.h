@@ -17,6 +17,8 @@ public:
 
 	float Damage = 20.f;
 
+	float HeadShotDamage = 20.f;
+
 	//Used for server-side rewind
 	bool bUseServerSideRewind = false;
 	FVector_NetQuantize TraceStart;

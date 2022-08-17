@@ -94,7 +94,6 @@ void ABlasterPlayerController::CheckPing(float DeltaTime)
         PlayerState = PlayerState == nullptr ? GetPlayerState<APlayerState>() : PlayerState;
         if (PlayerState)
         {
-            //UE_LOG(LogTemp, Warning, TEXT("PlayerState->GetPingInMilliseconds() = %f"), PlayerState->GetPingInMilliseconds());
             if (PlayerState->GetPingInMilliseconds() > HighPingThreshold)
             {
                 HighPingWarning();
@@ -356,6 +355,44 @@ void ABlasterPlayerController::AnnounceElim()
     if (BlasterHUD)
     {
         BlasterHUD->ShowElimMessage();
+    }
+}
+
+void ABlasterPlayerController::BroadcastElimination(APlayerState* Attacker, APlayerState* Victim)
+{
+    ClientEliminationAnnouncement(Attacker, Victim);
+}
+
+void ABlasterPlayerController::ClientEliminationAnnouncement_Implementation(APlayerState* Attacker, APlayerState* Victim)
+{
+    APlayerState* Self = GetPlayerState<APlayerState>();
+    if (Attacker && Victim && Self)
+    {
+        BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+        if (BlasterHUD)
+        {
+            FString AttackerString = Attacker->GetPlayerName();
+            FString VictimString = Victim->GetPlayerName();
+
+            if (Attacker == Self)
+            {
+                AttackerString = FString("You");
+                if (Victim == Self)
+                {
+                    VictimString = FString("yourself");
+                }
+            }
+            else if (Victim == Attacker)
+            {
+                VictimString = FString("themself");
+            }
+            else if (Victim == Self)
+            {
+                VictimString = FString("you");
+            }
+
+            BlasterHUD->AddEliminationAnnouncement(AttackerString, VictimString);
+        }
     }
 }
 

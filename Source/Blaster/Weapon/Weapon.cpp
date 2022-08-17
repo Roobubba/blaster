@@ -145,7 +145,6 @@ void AWeapon::OnEquipped()
 		WeaponMesh->SetEnableGravity(false);
 		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
-	//UE_LOG(LogTemp, Warning, TEXT("Weapon Picked Up. Ammo = %d"), Ammo);
 
 	BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(GetOwner()) : BlasterOwnerCharacter;
 
@@ -360,7 +359,6 @@ void AWeapon::ClientUpdateAmmo_Implementation(int32 ServerAmmo)
 		return;
 	}
 
-	//UE_LOG(LogTemp, Warning, TEXT("ClientAmmo called with ServerAmmo = %d and Ammo = %d and SequenceAmmo = %d"), ServerAmmo, Ammo, SequenceAmmo);
 	Ammo = ServerAmmo;
 	--SequenceAmmo;
 	Ammo -= SequenceAmmo;
@@ -381,8 +379,6 @@ void AWeapon::ClientAddAmmo_Implementation(int32 AmmoToAdd)
 		return;
 	}
 
-	//UE_LOG(LogTemp, Warning, TEXT("ClientAddAmmo called with AmmoToAdd = %d and Ammo = %d and SequenceAmmo = %d"), AmmoToAdd, Ammo, SequenceAmmo);
-	
 	Ammo = FMath::Clamp(Ammo + AmmoToAdd, 0, MagCapacity);
 	
 	BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(GetOwner()) : BlasterOwnerCharacter;

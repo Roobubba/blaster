@@ -40,12 +40,17 @@ public:
 	ABlasterHUD();
 	virtual void DrawHUD() override;
 	void ShowElimMessage();
+	void AddEliminationAnnouncement(FString Attacker, FString Victim);
 
 protected:
 
 	virtual void BeginPlay() override;
 
 private:
+
+	UPROPERTY()
+	class APlayerController* OwningPlayerController;
+
 	FHUDPackage HUDPackage;
 
 	void DrawCrosshair(UTexture2D* Texture, FVector2D ViewportCentre, FVector2D Spread, FLinearColor CrosshairColour);
@@ -83,6 +88,18 @@ private:
 	void AddCharacterOverlay();
 	void AddAnnouncement();
 
+	UPROPERTY(EditAnywhere, Category = "Announcements")
+	TSubclassOf<class UEliminationAnnouncement> EliminationAnnouncementClass;
+
+	UPROPERTY(EditAnywhere)
+	float EliminationAnnouncementTime = 5.f;
+
+	UFUNCTION()
+	void EliminationAnnouncementTimerFinished(UEliminationAnnouncement* MessageToRemove);
+
+	UPROPERTY()
+	TArray<UEliminationAnnouncement*> EliminationMessages;
+	
 public:
 	FORCEINLINE void SetHUDPackage(const FHUDPackage& Package) { HUDPackage = Package; }
 	FORCEINLINE UAnnouncement* GetAnnouncement() const { return Announcement; }

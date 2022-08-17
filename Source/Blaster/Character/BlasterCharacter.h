@@ -44,6 +44,12 @@ public:
 
 	FOnLeftGame OnLeftGame;
 
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastGainedTheLead();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastLostTheLead();
+
 	UPROPERTY(Replicated)
 	bool bDisableGameplay = false;
 	void UpdateHUDHealth();
@@ -61,6 +67,7 @@ public:
 	TMap<FName, class UBoxComponent*> HitCollisionBoxes;
 
 	bool bFinishedSwapping = false;
+
 
 protected:
 	virtual void BeginPlay() override;
@@ -300,8 +307,9 @@ private:
 	UMaterialInstance* DissolveMaterialInstance;
 
 	/*
-	 Elim Bot
+	 Elim Effects
 	*/
+
 	UPROPERTY(EditAnywhere)
 	UParticleSystem* ElimBotEffect;
 
@@ -310,6 +318,12 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	class USoundCue* ElimBotSound;
+
+	UPROPERTY(EditAnywhere)
+	class UNiagaraSystem* CrownSystem;
+
+	UPROPERTY()
+	class UNiagaraComponent* CrownComponent;
 
 	// Grenade
 	UPROPERTY(VisibleAnywhere)

@@ -11,6 +11,7 @@
 #include "Blaster/Blaster.h"
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
+#include "Blaster/BlasterComponents/BuffComponent.h"
 
 AProjectile::AProjectile()
 {
@@ -66,7 +67,20 @@ void AProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimi
 	{
 		if (OtherComp->GetCollisionObjectType() == ECC_PhysicsMesh)
 		{
-			OtherComp->AddImpulseAtLocation(GetActorForwardVector() * PhysicsImpactForce, Hit.Location);
+			float Multiplier = 1.f;
+            
+            ABlasterCharacter* OwnerCharacter = Cast<ABlasterCharacter>(GetOwner());
+
+			if (OwnerCharacter)
+			{
+
+				if (OwnerCharacter && OwnerCharacter->GetBuffComponent())
+				{
+					Multiplier = FMath::Max(Multiplier, OwnerCharacter->GetBuffComponent()->GetDamageMultiplier());
+				}
+			}
+
+			OtherComp->AddImpulseAtLocation(GetActorForwardVector() * PhysicsImpactForce * Multiplier, Hit.Location);
 		}
 	}
 }

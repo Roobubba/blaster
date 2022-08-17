@@ -6,6 +6,10 @@
 #include "Components/TextBlock.h"
 #include "TimerManager.h"
 #include "Announcement.h"
+#include "EliminationAnnouncement.h"
+#include "Blueprint/WidgetLayoutLibrary.h"
+#include "Components/HorizontalBox.h"
+#include "Components/CanvasPanelSlot.h"
 
 ABlasterHUD::ABlasterHUD()
 {
@@ -154,5 +158,56 @@ void ABlasterHUD::ElimTextTimerFinished()
     {
         //CharacterOverlay->ElimText->SetVisibility(ESlateVisibility::Hidden);
         CharacterOverlay->ElimText->SetRenderOpacity(0.f);
+    }
+}
+
+void ABlasterHUD::AddEliminationAnnouncement(FString Attacker, FString Victim)
+{
+    OwningPlayerController = OwningPlayerController == nullptr ? GetOwningPlayerController() : OwningPlayerController;
+
+    if (OwningPlayerController && EliminationAnnouncementClass)
+    {
+        UEliminationAnnouncement* EliminationAnnouncementWidget = CreateWidget<UEliminationAnnouncement>(OwningPlayerController, EliminationAnnouncementClass);
+        if (EliminationAnnouncementWidget)
+        {
+            EliminationAnnouncementWidget->SetEliminationAnnouncementText(Attacker, Victim);
+            EliminationAnnouncementWidget->AddToViewport();
+
+            for (UEliminationAnnouncement* Message : EliminationMessages)
+            {
+                if (Message && Message->AnnouncementBox)
+                {
+                    UCanvasPanelSlot* CanvasSlot = UWidgetLayoutLibrary::SlotAsCanvasSlot(Message->AnnouncementBox);
+                    if (CanvasSlot)
+                    {
+                        FVector2D Position = CanvasSlot->GetPosition();
+                        FVector2D NewPosition(Position.X, Position.Y - CanvasSlot->GetSize().Y);
+                        CanvasSlot->SetPosition(NewPosition);
+                    }
+                }
+            }
+
+            EliminationMessages.Add(EliminationAnnouncementWidget);
+
+            FTimerHandle EliminationMessageTimer;
+            FTimerDelegate EliminationMessageDelegate;
+
+            EliminationMessageDelegate.BindUFunction(this, FName("EliminationAnnouncementTimerFinished"), EliminationAnnouncementWidget);
+            GetWorldTimerManager().SetTimer
+            (
+                EliminationMessageTimer,
+                EliminationMessageDelegate,
+                EliminationAnnouncementTime,
+                false
+            );
+        }
+    }
+}
+
+void ABlasterHUD::EliminationAnnouncementTimerFinished(UEliminationAnnouncement* MessageToRemove)
+{
+    if (MessageToRemove)
+    {
+        MessageToRemove->RemoveFromParent();
     }
 }

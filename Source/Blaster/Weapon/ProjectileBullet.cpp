@@ -6,8 +6,7 @@
 #include "Blaster/PlayerController/BlasterPlayerController.h"
 #include "Blaster/BlasterComponents/LagCompensationComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
-//#include "DrawDebugHelpers.h"
-//#include "Blaster/Blaster.h"
+#include "Blaster/BlasterComponents/BuffComponent.h"
 
 AProjectileBullet::AProjectileBullet()
 {
@@ -46,12 +45,19 @@ void AProjectileBullet::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, 
         {
             if (OwnerCharacter->HasAuthority() && (!bUseServerSideRewind || OwnerCharacter->IsLocallyControlled()))
             {
-                UGameplayStatics::ApplyDamage(OtherActor, Damage, OwnerController, this, UDamageType::StaticClass());
+                float Multiplier = 1.f;
+                
+                if (OwnerCharacter && OwnerCharacter->GetBuffComponent())
+                {
+                    Multiplier = FMath::Max(Multiplier, OwnerCharacter->GetBuffComponent()->GetDamageMultiplier());
+                }
+
+                float DamageToApply = Multiplier * (Damage + (Hit.BoneName.ToString() == FString("head") ? HeadShotDamage : 0.f));
+                UGameplayStatics::ApplyDamage(OtherActor, DamageToApply, OwnerController, this, UDamageType::StaticClass());
                 Super::OnHit(HitComp, OtherActor, OtherComp, NormalImpulse, Hit);
                 Destroy();
                 return;
             }
-
             
             if (bUseServerSideRewind && OwnerCharacter->GetLagCompensation() && OwnerCharacter->IsLocallyControlled())
             {
@@ -78,36 +84,5 @@ void AProjectileBullet::Destroyed()
 {
     SpawnImpactEffects();
 
-    //DrawDebugSphere
-    //(
-    //    GetWorld(),
-    //    GetActorLocation(),
-    //    16.f,
-    //    12,
-    //    FColor::Orange,
-    //    true
-    //);
-
     Super::Destroyed();
 }
-
-//void AProjectileBullet::BeginPlay()
-//{
-//    Super::BeginPlay();
-//
-//    //FPredictProjectilePathParams PathParams;
-//    //PathParams.bTraceWithChannel = true;
-//    //PathParams.bTraceWithCollision = true;
-//    //PathParams.DrawDebugTime = 5.f;
-//    //PathParams.DrawDebugType = EDrawDebugTrace::ForDuration;
-//    //PathParams.LaunchVelocity = GetActorForwardVector() * InitialSpeed;
-//    //PathParams.MaxSimTime = 4.f;
-//    //PathParams.ProjectileRadius = 5.f;
-//    //PathParams.SimFrequency = 30.f;
-//    //PathParams.StartLocation = GetActorLocation();
-//    //PathParams.TraceChannel = ECC_HitBox;
-//    //PathParams.ActorsToIgnore.Add(this);
-////
-//    //FPredictProjectilePathResult PathResult;
-//    //UGameplayStatics::PredictProjectilePath(this, PathParams, PathResult);
-//}

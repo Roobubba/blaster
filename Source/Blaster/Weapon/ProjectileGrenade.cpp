@@ -10,6 +10,8 @@
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
 #include "NiagaraEmitterInstance.h"
+#include "Blaster/Character/BlasterCharacter.h"
+#include "Blaster/BlasterComponents/BuffComponent.h"
 
 AProjectileGrenade::AProjectileGrenade()
 {
@@ -21,7 +23,6 @@ AProjectileGrenade::AProjectileGrenade()
 	ProjectileMovementComponent->bRotationFollowsVelocity = true;
     ProjectileMovementComponent->SetIsReplicated(true);
     ProjectileMovementComponent->bShouldBounce = true;
-    
 }
 
 #if WITH_EDITOR
@@ -74,7 +75,26 @@ void AProjectileGrenade::ExplodeTimerFinished()
 {
     SpawnImpactEffects();
     ApplyDamage();
-    ApplyPhysicsImpulses();
+
+    APawn* FiringPawn = GetInstigator();
+    if (FiringPawn && HasAuthority())
+    {
+        AController* FiringController = FiringPawn->GetController();
+
+        if (FiringController)
+        {
+            float Multiplier = 1.f;
+            
+            ABlasterCharacter* OwnerCharacter = Cast<ABlasterCharacter>(FiringPawn);
+
+            if (OwnerCharacter && OwnerCharacter->GetBuffComponent())
+            {
+                Multiplier = FMath::Max(Multiplier, OwnerCharacter->GetBuffComponent()->GetDamageMultiplier());
+            }
+
+            ApplyPhysicsImpulses(Multiplier);
+        }
+    }
 
     if (ProjectileMesh)
     {
@@ -109,10 +129,19 @@ void AProjectileGrenade::ApplyDamage()
 
         if (FiringController)
         {
+            float Multiplier = 1.f;
+            
+            ABlasterCharacter* OwnerCharacter = Cast<ABlasterCharacter>(FiringPawn);
+
+            if (OwnerCharacter && OwnerCharacter->GetBuffComponent())
+            {
+                Multiplier = FMath::Max(Multiplier, OwnerCharacter->GetBuffComponent()->GetDamageMultiplier());
+            }
+
             UGameplayStatics::ApplyRadialDamageWithFalloff(
                 this,
-                Damage,
-                Damage / 4.f,
+                Damage * Multiplier,
+                Damage * Multiplier * 0.25f,
                 GetActorLocation(),
                 InnerDamageRadius,
                 OuterDamageRadius,
@@ -126,7 +155,7 @@ void AProjectileGrenade::ApplyDamage()
     }
 }
 
-void AProjectileGrenade::ApplyPhysicsImpulses()
+void AProjectileGrenade::ApplyPhysicsImpulses(float DamageMultiplier)
 {
     if (HasAuthority())
     {
@@ -162,7 +191,7 @@ void AProjectileGrenade::ApplyPhysicsImpulses()
                 {
                     FVector ImpulseDirection = HitActor->GetActorLocation() - GetActorLocation();
                     float Force = PhysicsImpactForce * (1.f - FMath::Clamp((ImpulseDirection.Size() - InnerDamageRadius) / (2.f * OuterDamageRadius - InnerDamageRadius), 0.f, 1.f));
-                    PrimitiveComponents[0]->AddImpulse(ImpulseDirection.GetSafeNormal() * Force);
+                    PrimitiveComponents[0]->AddImpulse(ImpulseDirection.GetSafeNormal() * Force * DamageMultiplier);
                 }
             }
         }

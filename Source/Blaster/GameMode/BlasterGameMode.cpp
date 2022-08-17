@@ -1,6 +1,5 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "BlasterGameMode.h"
 #include "Blaster/Character/BlasterCharacter.h"
 #include "Blaster/PlayerController/BlasterPlayerController.h"
@@ -91,8 +90,35 @@ void ABlasterGameMode::PlayerEliminated(ABlasterCharacter* VictimCharacter, ABla
 
     if (AttackerPlayerState && AttackerPlayerState != VictimPlayerState && BlasterGameState)
     {
+        TArray<ABlasterPlayerState*> PlayersCurrentlyInTheLead;
+        for (auto LeadPlayer : BlasterGameState->TopScoringPlayers)
+        {
+            PlayersCurrentlyInTheLead.Add(LeadPlayer);
+        }
+
         AttackerPlayerState->AddToScore(1.f);
         BlasterGameState->UpdateTopScore(AttackerPlayerState);
+
+        if (BlasterGameState->TopScoringPlayers.Contains(AttackerPlayerState))
+        {
+            ABlasterCharacter* NewLeader = Cast<ABlasterCharacter>(AttackerPlayerState->GetPawn());
+            if (NewLeader)
+            {
+                NewLeader->MulticastGainedTheLead();
+            }
+        }
+
+        for (int32 i = 0; i < PlayersCurrentlyInTheLead.Num(); i++)
+        {
+            if (!BlasterGameState->TopScoringPlayers.Contains(PlayersCurrentlyInTheLead[i]))
+            {
+                ABlasterCharacter* Loser = Cast<ABlasterCharacter>(PlayersCurrentlyInTheLead[i]->GetPawn());
+                if (Loser)
+                {
+                    Loser->MulticastLostTheLead();
+                }
+            }
+        }
     }
 
     if (VictimPlayerState)
@@ -103,6 +129,15 @@ void ABlasterGameMode::PlayerEliminated(ABlasterCharacter* VictimCharacter, ABla
     if (VictimCharacter)
     {
         VictimCharacter->Eliminate(false);
+    }
+
+    for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); Iterator; ++Iterator)
+    {
+        ABlasterPlayerController* BlasterPlayer = Cast<ABlasterPlayerController>(*Iterator);
+        if (BlasterPlayer && AttackerPlayerState && VictimPlayerState)
+        {
+            BlasterPlayer->BroadcastElimination(AttackerPlayerState, VictimPlayerState);
+        }
     }
 }
 

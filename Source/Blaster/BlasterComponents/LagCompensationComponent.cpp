@@ -7,7 +7,6 @@
 #include "Blaster/BlasterComponents/BuffComponent.h"
 #include "Blaster/Weapon/Weapon.h"
 #include "Components/BoxComponent.h"
-#include "DrawDebugHelpers.h"
 #include "Components/BoxComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Blaster/BlasterComponents/CombatComponent.h"
@@ -192,38 +191,18 @@ bool ULagCompensationComponent::HitScanServerSideRewind(const FVector& TraceStar
 
         if (FireHit.bBlockingHit)
         {
-			//if (FireHit.Component.IsValid())
-			//{
-			//	UBoxComponent* BoxThatWeHit = Cast<UBoxComponent>(FireHit.Component);
-			//	if (BoxThatWeHit)
-			//	{
-			//		DrawDebugBox(World, BoxThatWeHit->GetComponentLocation(), BoxThatWeHit->GetScaledBoxExtent(), FQuat(BoxThatWeHit->GetComponentRotation()),  bHeadShots ? FColor::Red : FColor::Orange, false, 8.f);
-			//	}
-			//}
-
-
             BeamEnd = FireHit.ImpactPoint;
-
-            //DrawDebugSphere
-            //(
-            //    World,
-            //    BeamEnd,
-            //    16.f,
-            //    12,
-            //    FColor::Orange,
-            //    true
-            //);
         
             ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(FireHit.GetActor());
             if (BlasterCharacter)
             {
                 if (DamageMap.Contains(BlasterCharacter))
                 {
-                    DamageMap[BlasterCharacter] += InstigatorWeapon->GetDamage() * DamageMultiplier;
+                    DamageMap[BlasterCharacter] += DamageMultiplier * (InstigatorWeapon->GetDamage() + (bHeadShots ? InstigatorWeapon->GetHeadShotDamage() : 0.f));
                 }
                 else
                 {
-                    DamageMap.Emplace(BlasterCharacter, InstigatorWeapon->GetDamage() * DamageMultiplier);
+                    DamageMap.Emplace(BlasterCharacter, DamageMultiplier * (InstigatorWeapon->GetDamage() + (bHeadShots ? InstigatorWeapon->GetHeadShotDamage() : 0.f)));
                 }
 
 				bHit = true;
@@ -282,11 +261,11 @@ void ULagCompensationComponent::ProjectileServerScoreRequest_Implementation(ABla
 		Multiplier = FMath::Max(Multiplier, Character->GetBuffComponent()->GetDamageMultiplier()); // we *could* create a history for this but as SSR will only be used up to max few 100ms, we will leave this for now
 	}
 
-	bool bHit = ProjectileServerSideRewind(TraceStart, InitialVelocity, true);
+	bool bHit = ProjectileServerSideRewind(TraceStart, InitialVelocity);
 
 	if (bHit)
 	{
-		Damage = InstigatorWeapon->GetDamage() * Multiplier; // headshot damage to go here
+		Damage = Multiplier * (InstigatorWeapon->GetDamage() + InstigatorWeapon->GetHeadShotDamage());
 	}
 	else
 	{
@@ -304,7 +283,7 @@ void ULagCompensationComponent::ProjectileServerScoreRequest_Implementation(ABla
 			HeadBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		}
 		
-		bHit = ProjectileServerSideRewind(TraceStart, InitialVelocity, true);
+		bHit = ProjectileServerSideRewind(TraceStart, InitialVelocity);
 
 		if (bHit)
 		{
@@ -321,13 +300,11 @@ void ULagCompensationComponent::ProjectileServerScoreRequest_Implementation(ABla
 	EnableCharacterMeshCollision(HitCharacter, ECollisionEnabled::QueryAndPhysics);
 }
 
-bool ULagCompensationComponent::ProjectileServerSideRewind(const FVector& TraceStart, const FVector& InitialVelocity, bool bHeadShots)
+bool ULagCompensationComponent::ProjectileServerSideRewind(const FVector& TraceStart, const FVector& InitialVelocity)
 {
 	FPredictProjectilePathParams PathParams;
 	PathParams.bTraceWithChannel = true;
 	PathParams.bTraceWithCollision = true;
-	PathParams.DrawDebugTime = 5.f;
-	PathParams.DrawDebugType = EDrawDebugTrace::ForDuration;
 	PathParams.LaunchVelocity = InitialVelocity;
 	PathParams.MaxSimTime = MaxRecordTime;
 	PathParams.ProjectileRadius = 5.f;
@@ -338,15 +315,6 @@ bool ULagCompensationComponent::ProjectileServerSideRewind(const FVector& TraceS
 
 	FPredictProjectilePathResult PathResult;
 	UGameplayStatics::PredictProjectilePath(this, PathParams, PathResult);
-
-	if (PathResult.HitResult.Component.IsValid())
-	{
-		UBoxComponent* BoxThatWeHit = Cast<UBoxComponent>(PathResult.HitResult.Component);
-		if (BoxThatWeHit)
-		{
-			DrawDebugBox(GetWorld(), BoxThatWeHit->GetComponentLocation(), BoxThatWeHit->GetScaledBoxExtent(), FQuat(BoxThatWeHit->GetComponentRotation()),  bHeadShots ? FColor::Red : FColor::Orange, false, 8.f);
-		}
-	}
 
 	return PathResult.HitResult.bBlockingHit;
 }
@@ -425,7 +393,6 @@ FFramePackage ULagCompensationComponent::GetFrameToCheck(ABlasterCharacter* HitC
 
 	if (FrameToCheck.PackageCharacter == nullptr)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("FrameToCheck.PackageCharacter is nullptr, should not see me"));
 		FrameToCheck.PackageCharacter = HitCharacter;
 	}
 

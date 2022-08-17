@@ -27,7 +27,7 @@ protected:
 	void StartExplodeTimer();
 	void ExplodeTimerFinished();
 	void ApplyDamage();
-	void ApplyPhysicsImpulses();
+	void ApplyPhysicsImpulses(float DamageMultiplier);
 
 	UFUNCTION()
 	void OnBounce(const FHitResult& ImpactResult, const FVector& ImpactVelocity);
