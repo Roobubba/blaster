@@ -44,8 +44,8 @@ public:
 
 	void EnableChatInput();
 
-	void AddChatMessage(FString Sender, const FString& Message);
-
+	void AddChatMessage(const FString& Message);
+	void ResetChatSystem();
 
 protected:
 

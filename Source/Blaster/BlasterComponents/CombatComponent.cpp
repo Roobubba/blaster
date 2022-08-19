@@ -743,7 +743,20 @@ bool UCombatComponent::ServerFire_Validate(const FVector_NetQuantize& TraceHitTa
 {
 	if (EquippedWeapon)
 	{
-		bool bNearlyEqual = FMath::IsNearlyEqual(EquippedWeapon->GetFireDelay(), FireDelay, 0.001f);
+		bool bNearlyEqual = FMath::IsNearlyEqual(EquippedWeapon->GetFireDelay(), FireDelay, 0.002f);
+		if (!bNearlyEqual)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("EquippedWeapon->GetFireDelay() =  %f; FireDelay = %f; failed validation check NearlyEqual delta = 0.002f"), EquippedWeapon->GetFireDelay(), FireDelay);
+			if (GEngine)
+			{
+				GEngine->AddOnScreenDebugMessage(
+					-1,
+					15.f,
+					FColor::Red,
+					FString::Printf(TEXT("EquippedWeapon->GetFireDelay() =  %f; FireDelay = %f; failed validation check NearlyEqual delta = 0.002f"), EquippedWeapon->GetFireDelay(), FireDelay)
+				);
+			}
+		}
 		return bNearlyEqual;
 	}
 

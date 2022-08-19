@@ -21,6 +21,6 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* ChatMessageText;
 
-	void SetChatMessageText(FString Sender, FString ChatMessage);
+	void SetChatMessageText(const FString& ChatMessage);
 
 };

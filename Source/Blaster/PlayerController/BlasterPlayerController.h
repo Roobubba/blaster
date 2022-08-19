@@ -38,7 +38,7 @@ public:
 	UFUNCTION(Server, Reliable)
 	void ServerBroadcastChatMessage(APlayerController* Sender, const FString& Message);
 
-	void BroadcastChatMessage(APlayerController* Sender, const FString& Message);
+	void BroadcastChatMessage(const FString& Message);
 
 	virtual void OnPossess(APawn* InPawn) override;
 
@@ -102,7 +102,7 @@ protected:
 	void ClientEliminationAnnouncement(APlayerState* Attacker, APlayerState* Victim);
 
 	UFUNCTION(Client, Reliable)
-	void ClientReceiveChatMessage(APlayerController* Sender, const FString& Message);
+	void ClientReceiveChatMessage(const FString& Message);
 
 private:
 

@@ -300,7 +300,7 @@ void ABlasterHUD::ChatInputCommitted(const FText& Text, ETextCommit::Type Commit
     }
 }
 
-void ABlasterHUD::AddChatMessage(FString Sender, const FString& Message)
+void ABlasterHUD::AddChatMessage(const FString& Message)
 {
     OwningPlayerController = OwningPlayerController == nullptr ? GetOwningPlayerController() : OwningPlayerController;
 
@@ -309,7 +309,7 @@ void ABlasterHUD::AddChatMessage(FString Sender, const FString& Message)
         UChatMessage* ChatMessageWidget = CreateWidget<UChatMessage>(OwningPlayerController, ChatMessageClass);
         if (ChatMessageWidget)
         {
-            ChatMessageWidget->SetChatMessageText(Sender, Message);
+            ChatMessageWidget->SetChatMessageText(Message);
             ChatMessageWidget->AddToViewport();
 
             for (UChatMessage* ChatMessage : ChatMessages)
@@ -348,5 +348,23 @@ void ABlasterHUD::ChatMessageTimerFinished(UChatMessage* MessageToRemove)
     if (MessageToRemove)
     {
         MessageToRemove->RemoveFromParent();
+    }
+}
+
+void ABlasterHUD::ResetChatSystem()
+{
+    for (auto MessageToRemove : ChatMessages)
+    {
+        if (MessageToRemove)
+        {
+            MessageToRemove->RemoveFromParent();
+        }
+    }
+
+    ChatMessages.Empty();
+    if (ChatInput && ChatInput->ChatInputEditableText)
+    {
+        ChatInput->ChatInputEditableText->SetText(FText());
+        ChatInput->ChatInputEditableText->SetVisibility(ESlateVisibility::Hidden);
     }
 }

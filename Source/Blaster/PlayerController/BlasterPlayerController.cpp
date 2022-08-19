@@ -398,42 +398,39 @@ void ABlasterPlayerController::ToggleChatInput()
 
 void ABlasterPlayerController::ServerBroadcastChatMessage_Implementation(APlayerController* Sender, const FString& Message)
 {
-    UE_LOG(LogTemp, Warning, TEXT("ServerBroadcastChatMessage_Implementation is running. Message = %s"), *Message);
+
     UWorld* World = GetWorld();
     if (World && Sender && Message.Len() > 0)
     {
+        APlayerState* SenderState = Sender->PlayerState;
+        FString FromString = SenderState ? SenderState->GetPlayerName() : "Unknown";
+
         for (FConstPlayerControllerIterator Iterator = World->GetPlayerControllerIterator(); Iterator; ++Iterator)
         {
             ABlasterPlayerController* BlasterPlayer = Cast<ABlasterPlayerController>(*Iterator);
             if (BlasterPlayer && Sender && Message.Len() > 0)
             {
-                UE_LOG(LogTemp, Warning, TEXT("Calling BroadcastChatMessage()"));
-                BlasterPlayer->BroadcastChatMessage(Sender, Message);
+                FString MessageToSend = FString::Printf(TEXT("%s: %s"), *FromString, *Message);
+                UE_LOG(LogTemp, Warning, TEXT("ServerBroadcastChatMessage_Implementation is running. Message = %s"), *MessageToSend);
+                BlasterPlayer->BroadcastChatMessage(MessageToSend);
             }
         }
     }
 }
 
-void ABlasterPlayerController::BroadcastChatMessage(APlayerController* Sender, const FString& Message)
+void ABlasterPlayerController::BroadcastChatMessage(const FString& Message)
 {
-    ClientReceiveChatMessage(Sender, Message);
+    ClientReceiveChatMessage(Message);
 }
 
-void ABlasterPlayerController::ClientReceiveChatMessage_Implementation(APlayerController* Sender, const FString& Message)
+void ABlasterPlayerController::ClientReceiveChatMessage_Implementation(const FString& Message)
 {
     UE_LOG(LogTemp, Warning, TEXT("ClientReceiveChatMessage_Implementation started"));
     BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
 
     if (BlasterHUD)
     {
-        PlayerState = PlayerState == nullptr ? GetPlayerState<APlayerState>() : PlayerState;
-        FString From = "Unknown";
-        if (PlayerState)
-        {
-            From = PlayerState->GetPlayerName();
-        }
-
-        BlasterHUD->AddChatMessage(From, Message);
+        BlasterHUD->AddChatMessage(Message);
     }
 }
 
@@ -856,6 +853,8 @@ void ABlasterPlayerController::HandleMatchHasStarted()
         {
             Announcement->SetVisibility(ESlateVisibility::Hidden);
         }
+
+        BlasterHUD->ResetChatSystem();
     }
 }
 
