@@ -57,10 +57,6 @@ void ABlasterPlayerState::AddToDefeats(int32 DefeatsAmount)
         if (Controller)
         {
             Controller->SetHUDDefeats(Defeats);
-            if (DefeatsAmount > 0)
-            {
-                Controller->AnnounceElim();
-            }
         }
     }
 }
@@ -75,7 +71,6 @@ void ABlasterPlayerState::OnRep_Defeats()
         if (Controller)
         {
             Controller->SetHUDDefeats(Defeats);
-            Controller->AnnounceElim();
         }
     }
 }

@@ -10,11 +10,15 @@
 #include "Blueprint/WidgetLayoutLibrary.h"
 #include "Components/HorizontalBox.h"
 #include "Components/CanvasPanelSlot.h"
+#include "ChatMessage.h"
+#include "ChatInput.h"
+#include "Components/EditableText.h"
+#include "Blaster/PlayerController/BlasterPlayerController.h"
 
 ABlasterHUD::ABlasterHUD()
 {
-    ElimTextTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("TimelineComponent"));
-    ElimTextTrack.BindDynamic(this, &ABlasterHUD::UpdateElimTextAlpha);
+    AnnouncementTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("TimelineComponent"));
+    AnnouncementTextTrack.BindDynamic(this, &ABlasterHUD::UpdateAnnouncementTextAlpha);
 }
 
 void ABlasterHUD::BeginPlay()
@@ -22,6 +26,7 @@ void ABlasterHUD::BeginPlay()
     Super::BeginPlay();
     AddCharacterOverlay();
     AddAnnouncement();
+    AddChatInput();
 }
 
 void ABlasterHUD::AddCharacterOverlay()
@@ -54,6 +59,23 @@ void ABlasterHUD::AddAnnouncement()
         Announcement = CreateWidget<UAnnouncement>(PlayerController, AnnouncementClass);
         Announcement->AddToViewport();
         Announcement->SetVisibility(ESlateVisibility::Hidden);
+    }
+}
+
+void ABlasterHUD::AddChatInput()
+{
+    APlayerController* PlayerController = GetOwningPlayerController();
+
+    if (PlayerController && ChatInputClass && !ChatInput)
+    {
+        ChatInput = CreateWidget<UChatInput>(PlayerController, ChatInputClass);
+        ChatInput->AddToViewport();
+        ChatInput->SetVisibility(ESlateVisibility::Visible);
+        if (ChatInput->ChatInputEditableText)
+        {
+            ChatInput->ChatInputEditableText->SetVisibility(ESlateVisibility::Hidden);
+            ChatInput->ChatInputEditableText->SetClearKeyboardFocusOnCommit(false);
+        }
     }
 }
 
@@ -121,43 +143,43 @@ void ABlasterHUD::DrawCrosshair(UTexture2D* Texture, FVector2D ViewportCentre, F
     );
 }
 
-void ABlasterHUD::ShowElimMessage()
+void ABlasterHUD::ShowAnnouncement(FString AnnouncementString)
 {
-    if (ElimTextTimeline && ElimTextCurve)
+    if (AnnouncementTimeline && AnnouncementTextCurve)
     {
-        ElimTextTimeline->AddInterpFloat(ElimTextCurve, ElimTextTrack);
-        ElimTextTimeline->PlayFromStart();
+        AnnouncementTimeline->AddInterpFloat(AnnouncementTextCurve, AnnouncementTextTrack);
+        AnnouncementTimeline->PlayFromStart();
             
-        if (CharacterOverlay && CharacterOverlay->ElimText)
+        if (CharacterOverlay && CharacterOverlay->AnnouncementText)
         {
-            //CharacterOverlay->ElimText->SetVisibility(ESlateVisibility::Visible);
-            CharacterOverlay->ElimText->SetRenderOpacity(0.f);
+            //CharacterOverlay->AnnouncementText->SetVisibility(ESlateVisibility::Visible);
+            CharacterOverlay->AnnouncementText->SetRenderOpacity(0.f);
         }
 
-        float CurveTime = ElimTextTimeline->GetTimelineLength();
+        float CurveTime = AnnouncementTimeline->GetTimelineLength();
         GetWorldTimerManager().SetTimer(
-            ElimTextTimerHandle,
+            AnnouncementTextTimerHandle,
             this,
-            &ABlasterHUD::ElimTextTimerFinished,
+            &ABlasterHUD::AnnouncementTextTimerFinished,
             CurveTime
         );
     }
 }
 
-void ABlasterHUD::UpdateElimTextAlpha(float ElimTextAlpha)
+void ABlasterHUD::UpdateAnnouncementTextAlpha(float ElimTextAlpha)
 {
-    if (CharacterOverlay && CharacterOverlay->ElimText)
+    if (CharacterOverlay && CharacterOverlay->AnnouncementText)
     {
-        CharacterOverlay->ElimText->SetRenderOpacity(ElimTextAlpha);
+        CharacterOverlay->AnnouncementText->SetRenderOpacity(ElimTextAlpha);
     }
 }
 
-void ABlasterHUD::ElimTextTimerFinished()
+void ABlasterHUD::AnnouncementTextTimerFinished()
 {
-    if (CharacterOverlay && CharacterOverlay->ElimText)
+    if (CharacterOverlay && CharacterOverlay->AnnouncementText)
     {
         //CharacterOverlay->ElimText->SetVisibility(ESlateVisibility::Hidden);
-        CharacterOverlay->ElimText->SetRenderOpacity(0.f);
+        CharacterOverlay->AnnouncementText->SetRenderOpacity(0.f);
     }
 }
 
@@ -181,7 +203,7 @@ void ABlasterHUD::AddEliminationAnnouncement(FString Attacker, FString Victim)
                     if (CanvasSlot)
                     {
                         FVector2D Position = CanvasSlot->GetPosition();
-                        FVector2D NewPosition(Position.X, Position.Y - CanvasSlot->GetSize().Y);
+                        FVector2D NewPosition(Position.X, Position.Y + CanvasSlot->GetSize().Y);
                         CanvasSlot->SetPosition(NewPosition);
                     }
                 }
@@ -205,6 +227,123 @@ void ABlasterHUD::AddEliminationAnnouncement(FString Attacker, FString Victim)
 }
 
 void ABlasterHUD::EliminationAnnouncementTimerFinished(UEliminationAnnouncement* MessageToRemove)
+{
+    if (MessageToRemove)
+    {
+        MessageToRemove->RemoveFromParent();
+    }
+}
+
+void ABlasterHUD::EnableChatInput()
+{
+    if (!ChatInput || !ChatInput->ChatInputEditableText)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("ChatInput or the ChatInputEditableText were nullptr"));
+        AddChatInput();
+        return;
+    }
+
+    if (ChatInput->ChatInputEditableText->GetVisibility() == ESlateVisibility::Visible)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Hiding Chat Input"));
+        ChatInput->ChatInputEditableText->SetVisibility(ESlateVisibility::Hidden);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Showing Chat Input"));
+        ChatInput->ChatInputEditableText->SetVisibility(ESlateVisibility::Visible);
+        ChatInput->ChatInputEditableText->SetKeyboardFocus();
+
+        if (!ChatInput->ChatInputEditableText->OnTextCommitted.IsBound())
+        {
+            UE_LOG(LogTemp, Warning, TEXT("Chat Input was not bound, binding to delegate"));
+            ChatInput->ChatInputEditableText->OnTextCommitted.AddDynamic(this, &ABlasterHUD::ChatInputCommitted);
+        }
+    }
+}
+
+void ABlasterHUD::ChatInputCommitted(const FText& Text, ETextCommit::Type CommitMethod)
+{
+    UE_LOG(LogTemp, Warning, TEXT("ChatInputCommitted called: Text = %s"), *FString(Text.ToString()));
+    if (ChatInput && ChatInput->ChatInputEditableText)
+    {
+        if (ChatInput->ChatInputEditableText->OnTextCommitted.IsBound())
+        {
+            ChatInput->ChatInputEditableText->OnTextCommitted.RemoveDynamic(this, &ABlasterHUD::ChatInputCommitted);
+        }
+
+        switch (CommitMethod)
+        {
+            case ETextCommit::OnEnter:
+                OwningPlayerController = OwningPlayerController == nullptr ? GetOwningPlayerController() : OwningPlayerController;
+                if (OwningPlayerController)
+                {
+                    OwningBlasterPlayerController = OwningBlasterPlayerController == nullptr ? Cast<ABlasterPlayerController>(OwningPlayerController) : OwningBlasterPlayerController;
+                    if (OwningBlasterPlayerController)
+                    {
+                        FString Message = FString(Text.ToString());
+                        UE_LOG(LogTemp, Display, TEXT("Message To Send = '%s'; Calling ServerBroadcastChatMessage()"), *Message);
+                        OwningBlasterPlayerController->ServerBroadcastChatMessage(OwningPlayerController, Message);  
+                    }
+                }
+                break;
+            case ETextCommit::Default:
+            case ETextCommit::OnCleared:
+            case ETextCommit::OnUserMovedFocus:
+            default:
+
+                break;
+        }
+        
+        ChatInput->ChatInputEditableText->SetText(FText());
+        ChatInput->ChatInputEditableText->SetVisibility(ESlateVisibility::Hidden);
+    }
+}
+
+void ABlasterHUD::AddChatMessage(FString Sender, const FString& Message)
+{
+    OwningPlayerController = OwningPlayerController == nullptr ? GetOwningPlayerController() : OwningPlayerController;
+
+    if (OwningPlayerController && ChatMessageClass)
+    {
+        UChatMessage* ChatMessageWidget = CreateWidget<UChatMessage>(OwningPlayerController, ChatMessageClass);
+        if (ChatMessageWidget)
+        {
+            ChatMessageWidget->SetChatMessageText(Sender, Message);
+            ChatMessageWidget->AddToViewport();
+
+            for (UChatMessage* ChatMessage : ChatMessages)
+            {
+                if (ChatMessage && ChatMessage->ChatMessageBox)
+                {
+                    UCanvasPanelSlot* CanvasSlot = UWidgetLayoutLibrary::SlotAsCanvasSlot(ChatMessage->ChatMessageBox);
+                    if (CanvasSlot)
+                    {
+                        FVector2D Position = CanvasSlot->GetPosition();
+                        FVector2D NewPosition(Position.X, Position.Y - CanvasSlot->GetSize().Y);
+                        CanvasSlot->SetPosition(NewPosition);
+                    }
+                }
+            }
+
+            ChatMessages.Add(ChatMessageWidget);
+
+            FTimerHandle ChatMessageTimer;
+            FTimerDelegate ChatMessageDelegate;
+
+            ChatMessageDelegate.BindUFunction(this, FName("ChatMessageTimerFinished"), ChatMessageWidget);
+            GetWorldTimerManager().SetTimer
+            (
+                ChatMessageTimer,
+                ChatMessageDelegate,
+                ChatMessageTime,
+                false
+            );
+        }
+    }
+}
+
+void ABlasterHUD::ChatMessageTimerFinished(UChatMessage* MessageToRemove)
 {
     if (MessageToRemove)
     {

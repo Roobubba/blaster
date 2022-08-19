@@ -41,7 +41,7 @@ public:
 	UTextBlock* DefeatsAmount;
 
 	UPROPERTY(meta = (BindWidget))
-	UTextBlock* ElimText;
+	UTextBlock* AnnouncementText;
 
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* WeaponAmmoAmount;

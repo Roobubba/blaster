@@ -39,8 +39,13 @@ public:
 
 	ABlasterHUD();
 	virtual void DrawHUD() override;
-	void ShowElimMessage();
+	void ShowAnnouncement(FString AnnouncementString);
 	void AddEliminationAnnouncement(FString Attacker, FString Victim);
+
+	void EnableChatInput();
+
+	void AddChatMessage(FString Sender, const FString& Message);
+
 
 protected:
 
@@ -51,6 +56,9 @@ private:
 	UPROPERTY()
 	class APlayerController* OwningPlayerController;
 
+	UPROPERTY()
+	class ABlasterPlayerController* OwningBlasterPlayerController;
+
 	FHUDPackage HUDPackage;
 
 	void DrawCrosshair(UTexture2D* Texture, FVector2D ViewportCentre, FVector2D Spread, FLinearColor CrosshairColour);
@@ -59,19 +67,19 @@ private:
 	float CrosshairSpreadMax = 16.f;
 
 	UPROPERTY(VisibleAnywhere)
-	UTimelineComponent* ElimTextTimeline;
-	FOnTimelineFloat ElimTextTrack;
+	UTimelineComponent* AnnouncementTimeline;
+	FOnTimelineFloat AnnouncementTextTrack;
 
 	UFUNCTION()
-	void UpdateElimTextAlpha(float ElimTextAlpha);
+	void UpdateAnnouncementTextAlpha(float AnnouncementTextAlpha);
 
 	UPROPERTY(EditAnywhere)
-	UCurveFloat* ElimTextCurve;
+	UCurveFloat* AnnouncementTextCurve;
 
-	FTimerHandle ElimTextTimerHandle;
+	FTimerHandle AnnouncementTextTimerHandle;
 
 	UFUNCTION()
-	void ElimTextTimerFinished();
+	void AnnouncementTextTimerFinished();
 
 	UPROPERTY(EditAnywhere, Category = "Player Stats")
 	TSubclassOf<class UUserWidget> CharacterOverlayClass;
@@ -100,6 +108,31 @@ private:
 	UPROPERTY()
 	TArray<UEliminationAnnouncement*> EliminationMessages;
 	
+
+	UPROPERTY(EditAnywhere, Category = "Chat")
+	TSubclassOf<class UChatMessage> ChatMessageClass;
+
+	UPROPERTY(EditAnywhere)
+	float ChatMessageTime = 5.f;
+
+	UFUNCTION()
+	void ChatMessageTimerFinished(UChatMessage* MessageToRemove);
+
+	UPROPERTY()
+	TArray<UChatMessage*> ChatMessages;
+
+	UPROPERTY(EditAnywhere, Category = "Chat")
+	TSubclassOf<class UChatInput> ChatInputClass;
+
+	UPROPERTY()
+	UChatInput* ChatInput = nullptr;
+
+	void AddChatInput();
+
+	UFUNCTION()
+	void ChatInputCommitted(const FText& Text, ETextCommit::Type CommitMethod);
+
+
 public:
 	FORCEINLINE void SetHUDPackage(const FHUDPackage& Package) { HUDPackage = Package; }
 	FORCEINLINE UAnnouncement* GetAnnouncement() const { return Announcement; }

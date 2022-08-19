@@ -487,6 +487,7 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	PlayerInputComponent->BindAction("Fire", IE_Released, this, &ABlasterCharacter::FireButtonReleased);
 	PlayerInputComponent->BindAction("Reload", IE_Pressed, this, &ABlasterCharacter::ReloadButtonPressed);
 	PlayerInputComponent->BindAction("ThrowGrenade", IE_Pressed, this, &ABlasterCharacter::GrenadeButtonPressed);
+	PlayerInputComponent->BindAction("ChatInput", IE_Pressed, this, &ABlasterCharacter::ChatInputButtonPressed);
 }
 
 void ABlasterCharacter::FellOutOfWorld(const UDamageType &dmgType)
@@ -769,6 +770,14 @@ void ABlasterCharacter::GrenadeButtonPressed()
 	if (CombatComponent)
 	{
 		CombatComponent->ThrowGrenade();
+	}
+}
+
+void ABlasterCharacter::ChatInputButtonPressed()
+{
+	if (BlasterPlayerController)
+	{
+		BlasterPlayerController->ToggleChatInput();
 	}
 }
 

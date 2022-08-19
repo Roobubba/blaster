@@ -84,6 +84,7 @@ protected:
 	void FireButtonReleased();
 	void ReloadButtonPressed();
 	void GrenadeButtonPressed();
+	void ChatInputButtonPressed();
 
 	void AimOffset(float DeltaTime);
 	void CalculateAO_Pitch();

@@ -32,8 +32,13 @@ public:
 	void SetHUDScore(float Score);
 	void SetHUDDefeats(int32 Defeats);
 
-	void AnnounceElim();
 	void BroadcastElimination(APlayerState* Attacker, APlayerState* Victim);
+	void ToggleChatInput();
+
+	UFUNCTION(Server, Reliable)
+	void ServerBroadcastChatMessage(APlayerController* Sender, const FString& Message);
+
+	void BroadcastChatMessage(APlayerController* Sender, const FString& Message);
 
 	virtual void OnPossess(APawn* InPawn) override;
 
@@ -95,6 +100,9 @@ protected:
 
 	UFUNCTION(Client, Reliable)
 	void ClientEliminationAnnouncement(APlayerState* Attacker, APlayerState* Victim);
+
+	UFUNCTION(Client, Reliable)
+	void ClientReceiveChatMessage(APlayerController* Sender, const FString& Message);
 
 private:
 
