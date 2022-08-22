@@ -29,4 +29,16 @@ void ABlasterGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
     DOREPLIFETIME(ABlasterGameState, TopScoringPlayers);
+    DOREPLIFETIME(ABlasterGameState, BlueTeamScore);
+    DOREPLIFETIME(ABlasterGameState, RedTeamScore);
+}
+
+void ABlasterGameState::OnRep_RedTeamScore()
+{
+
+}
+
+void ABlasterGameState::OnRep_BlueTeamScore()
+{
+
 }

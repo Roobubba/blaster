@@ -491,6 +491,11 @@ void UCombatComponent::FinishSwap()
 
 void UCombatComponent::FinishSwapAttachWeapons()
 {
+	if (EquippedWeapon == nullptr || SecondaryWeapon == nullptr)
+	{
+		return;
+	}
+
 	AWeapon* TempWeapon = EquippedWeapon;
 	EquippedWeapon = SecondaryWeapon;
 	SecondaryWeapon = TempWeapon;
@@ -499,6 +504,7 @@ void UCombatComponent::FinishSwapAttachWeapons()
 	AttachActorToRightHand(EquippedWeapon);
 	EquippedWeapon->SetHUDAmmo();
 	EquippedWeapon->SetHUDWeaponType();
+
 	UpdateCarriedAmmo();
 
 	SecondaryWeapon->SetWeaponState(EWeaponState::EWS_EquippedSecondary);

@@ -413,16 +413,27 @@ void ABlasterCharacter::MulticastGainedTheLead_Implementation()
 
 	if (CrownComponent == nullptr)
 	{
-		CrownComponent = UNiagaraFunctionLibrary::SpawnSystemAttached
-		(
-			CrownSystem,
-			GetMesh(),
-			FName("head"),
-			GetActorLocation() + FVector(0.f, 0.f, 115.f),
-			GetActorRotation(),
-			EAttachLocation::KeepWorldPosition,
-			false
-		);
+		FFXSystemSpawnParameters Params = FFXSystemSpawnParameters();
+		Params.AttachPointName = FName("CrownSocket");
+		Params.AttachToComponent = GetMesh();
+		Params.bAutoDestroy = false;
+		Params.LocationType = EAttachLocation::KeepRelativeOffset;
+		Params.Location = FVector(0.f, 0.f, 0.f);
+		Params.Rotation = FRotator(0.f, 0.f, 0.f);
+		Params.SystemTemplate = CrownSystem;
+		Params.Scale = FVector(0.75f, 0.75f, 0.75f);
+		CrownComponent = UNiagaraFunctionLibrary::SpawnSystemAttachedWithParams(Params);
+
+		//CrownComponent = UNiagaraFunctionLibrary::SpawnSystemAttached
+		//(
+		//	CrownSystem,
+		//	GetMesh(),
+		//	FName("CrownSocket"),
+		//	GetActorLocation() + FVector(0.f, 0.f, 115.f),
+		//	GetActorRotation(),
+		//	EAttachLocation::KeepWorldPosition,
+		//	false
+		//);
 	}
 
 	if (CrownComponent)
@@ -1117,6 +1128,7 @@ void ABlasterCharacter::PollInit()
 		{
 			BlasterPlayerState->AddToScore(0.f);
 			BlasterPlayerState->AddToDefeats(0);
+			SetTeamColour(BlasterPlayerState->GetTeam());
 	
 			ABlasterGameState* BlasterGameState = Cast<ABlasterGameState>(UGameplayStatics::GetGameState(this));
 			if (BlasterGameState && BlasterGameState->TopScoringPlayers.Contains(BlasterPlayerState))
@@ -1124,6 +1136,32 @@ void ABlasterCharacter::PollInit()
 				MulticastGainedTheLead();
 			}
 		}
+	}
+}
+
+void ABlasterCharacter::SetTeamColour(ETeam Team)
+{
+	if (GetMesh() == nullptr || OriginalMaterialInstance == nullptr)
+	{
+		return;
+	}
+
+	switch (Team)
+	{
+		case ETeam::ET_NoTeam:
+			GetMesh()->SetMaterial(0, OriginalMaterialInstance);
+			DissolveMaterialInstance = BlueDissolveMaterialInstance;
+		break;
+
+		case ETeam::ET_RedTeam:	
+			GetMesh()->SetMaterial(0, RedMaterialInstance);
+			DissolveMaterialInstance = RedDissolveMaterialInstance;
+		break;
+
+		case ETeam::ET_BlueTeam:
+			GetMesh()->SetMaterial(0, BlueMaterialInstance);
+			DissolveMaterialInstance = BlueDissolveMaterialInstance;
+		break;
 	}
 }
 

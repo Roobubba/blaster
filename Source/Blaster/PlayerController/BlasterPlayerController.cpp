@@ -19,6 +19,8 @@
 #include "Camera/CameraComponent.h"
 #include "Components/Image.h"
 #include "Blaster/HUD/ReturnToMainMenu.h"
+#include "Blaster/HUD/ChatInput.h"
+#include "Components/EditableText.h"
 
 void ABlasterPlayerController::BeginPlay()
 {
@@ -391,8 +393,31 @@ void ABlasterPlayerController::ToggleChatInput()
     BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
     if (BlasterHUD)
     {
-        UE_LOG(LogTemp, Display, TEXT("ToggleChatInput"));
-        BlasterHUD->EnableChatInput();
+        ChatInput = ChatInput == nullptr ? BlasterHUD->GetChatInput() : ChatInput;
+        if (ChatInput && ChatInput->ChatInputEditableText)
+        {
+            if (ChatInput->ChatInputEditableText->GetVisibility() == ESlateVisibility::Visible)
+            {
+                UE_LOG(LogTemp, Warning, TEXT("Hiding Chat Input"));
+                ChatInput->ChatInputEditableText->SetVisibility(ESlateVisibility::Hidden);
+            }
+            else
+            {
+                UE_LOG(LogTemp, Warning, TEXT("Showing Chat Input"));
+                ChatInput->ChatInputEditableText->SetVisibility(ESlateVisibility::Visible);
+                ChatInput->ChatInputEditableText->SetKeyboardFocus();
+
+                if (!ChatInput->ChatInputEditableText->OnTextCommitted.IsBound())
+                {
+                    UE_LOG(LogTemp, Warning, TEXT("Chat Input was not bound, binding to delegate"));
+                    ChatInput->ChatInputEditableText->OnTextCommitted.AddDynamic(BlasterHUD, &ABlasterHUD::ChatInputCommitted);
+                }
+            }
+        }
+        else
+        {
+            UE_LOG(LogTemp, Warning, TEXT("ChatInput or the ChatInputEditableText were nullptr"));
+        }
     }
 }
 
@@ -711,6 +736,19 @@ void ABlasterPlayerController::PollInit()
             if (Announcement)
             {
                 ServerGetMatchState();
+            }
+        }
+    }
+
+    if (ChatInput == nullptr)
+    {
+        BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+        if (BlasterHUD)
+        {
+            ChatInput = ChatInput == nullptr ? BlasterHUD->GetChatInput() : ChatInput;
+            if (ChatInput)
+            {
+                BlasterHUD->ResetChatSystem();
             }
         }
     }

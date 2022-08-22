@@ -8,6 +8,7 @@
 #include "Blaster/Interfaces/InteractWithCrosshairsInterface.h"
 #include "Components/TimelineComponent.h"
 #include "Blaster/BlasterTypes/CombatState.h"
+#include "Blaster/BlasterTypes/Team.h"
 #include "BlasterCharacter.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnLeftGame);
@@ -68,6 +69,7 @@ public:
 
 	bool bFinishedSwapping = false;
 
+	void SetTeamColour(ETeam Team);
 
 protected:
 	virtual void BeginPlay() override;
@@ -304,8 +306,23 @@ private:
 	UMaterialInstanceDynamic* DynamicDissolveMaterialInstance;
 
 	//MI set on the blueprint, used with the dynamic MI
-	UPROPERTY(EditAnywhere, Category = Elimination)
+	UPROPERTY(VisibleAnywhere, Category = Elimination)
 	UMaterialInstance* DissolveMaterialInstance;
+
+	UPROPERTY(EditAnywhere, Category = Elimination)
+	UMaterialInstance* RedDissolveMaterialInstance;
+
+	UPROPERTY(EditAnywhere, Category = Elimination)
+	UMaterialInstance* BlueDissolveMaterialInstance;
+
+	UPROPERTY(EditAnywhere, Category = Elimination)
+	UMaterialInstance* RedMaterialInstance;
+
+	UPROPERTY(EditAnywhere, Category = Elimination)
+	UMaterialInstance* BlueMaterialInstance;
+
+	UPROPERTY(EditAnywhere, Category = Elimination)
+	UMaterialInstance* OriginalMaterialInstance;
 
 	/*
 	 Elim Effects

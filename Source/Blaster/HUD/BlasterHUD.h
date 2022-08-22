@@ -42,10 +42,11 @@ public:
 	void ShowAnnouncement(FString AnnouncementString);
 	void AddEliminationAnnouncement(FString Attacker, FString Victim);
 
-	void EnableChatInput();
-
 	void AddChatMessage(const FString& Message);
 	void ResetChatSystem();
+
+	UFUNCTION()
+	void ChatInputCommitted(const FText& Text, ETextCommit::Type CommitMethod);
 
 protected:
 
@@ -129,13 +130,9 @@ private:
 
 	void AddChatInput();
 
-	UFUNCTION()
-	void ChatInputCommitted(const FText& Text, ETextCommit::Type CommitMethod);
-
-
 public:
 	FORCEINLINE void SetHUDPackage(const FHUDPackage& Package) { HUDPackage = Package; }
 	FORCEINLINE UAnnouncement* GetAnnouncement() const { return Announcement; }
 	FORCEINLINE UCharacterOverlay* GetCharacterOverlay() const { return CharacterOverlay; }
-
+	FORCEINLINE UChatInput* GetChatInput() const { return ChatInput; }
 };

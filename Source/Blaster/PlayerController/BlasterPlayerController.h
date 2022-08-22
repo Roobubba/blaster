@@ -136,6 +136,9 @@ private:
 	UPROPERTY()
 	class UAnnouncement* Announcement = nullptr;
 
+	UPROPERTY()
+	class UChatInput* ChatInput = nullptr;
+
 	bool bInitializeHUDHealth;
 	bool bInitializeHUDShield;	
 	bool bInitializeHUDScore;

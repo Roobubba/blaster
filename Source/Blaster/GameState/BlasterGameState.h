@@ -17,12 +17,27 @@ class BLASTER_API ABlasterGameState : public AGameState
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-
 	void UpdateTopScore(class ABlasterPlayerState* ScoringPlayer);
 
 	UPROPERTY(Replicated)
 	TArray<ABlasterPlayerState*> TopScoringPlayers;
 
+	TArray<ABlasterPlayerState*> RedTeam;
+	TArray<ABlasterPlayerState*> BlueTeam;
+
+
+	UPROPERTY(ReplicatedUsing = OnRep_RedTeamScore)
+	float RedTeamScore = 0.f;
+
+	UPROPERTY(ReplicatedUsing = OnRep_BlueTeamScore)
+	float BlueTeamScore = 0.f;	
+
+	UFUNCTION()
+	void OnRep_RedTeamScore();
+
+	UFUNCTION()
+	void OnRep_BlueTeamScore();
+	
 private:
 
 	float TopScore = 0.f;

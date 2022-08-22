@@ -234,9 +234,9 @@ void ABlasterHUD::EliminationAnnouncementTimerFinished(UEliminationAnnouncement*
     }
 }
 
-void ABlasterHUD::EnableChatInput()
-{
-    if (!ChatInput || !ChatInput->ChatInputEditableText)
+//void ABlasterHUD::EnableChatInput()
+//{
+/*     if (!ChatInput || !ChatInput->ChatInputEditableText)
     {
         UE_LOG(LogTemp, Warning, TEXT("ChatInput or the ChatInputEditableText were nullptr"));
         AddChatInput();
@@ -254,13 +254,13 @@ void ABlasterHUD::EnableChatInput()
         ChatInput->ChatInputEditableText->SetVisibility(ESlateVisibility::Visible);
         ChatInput->ChatInputEditableText->SetKeyboardFocus();
 
-        if (!ChatInput->ChatInputEditableText->OnTextCommitted.IsBound())
+        if (!ChatInput->ChatInputEditableText->IsValidLowLevel() && !ChatInput->ChatInputEditableText->OnTextCommitted.IsBound())
         {
             UE_LOG(LogTemp, Warning, TEXT("Chat Input was not bound, binding to delegate"));
             ChatInput->ChatInputEditableText->OnTextCommitted.AddDynamic(this, &ABlasterHUD::ChatInputCommitted);
         }
-    }
-}
+    } */
+//}
 
 void ABlasterHUD::ChatInputCommitted(const FText& Text, ETextCommit::Type CommitMethod)
 {
