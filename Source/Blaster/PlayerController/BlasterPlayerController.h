@@ -54,8 +54,8 @@ public:
 	void RemoveAllPickupTexts();
 
 	virtual void ReceivedPlayer() override; // earliest time to sync with server clock
-	void OnMatchStateSet(FName State);
-	void HandleMatchHasStarted();
+	void OnMatchStateSet(FName State, bool bTeamsMatch = false);
+	void HandleMatchHasStarted(bool bTeamsMatch = false);
 	void HandleCooldown();
 	void HandleWaitingToStart();
 
@@ -65,6 +65,11 @@ public:
 	float SingleTripTime = 0.f;
 
 	FHighPingDelegate HighPingDelegate;
+
+	void HideTeamScores();
+	void InitTeamScores();
+	void SetHUDRedTeamScore(int32 RedScore);
+	void SetHUDBlueTeamScore(int32 BlueScore);
 
 protected:
 
@@ -94,7 +99,7 @@ protected:
 	void CheckTimeSync(float DeltaTime);
 
 	UFUNCTION(Client, Reliable)
-	void ClientJoinMidgame(FName StateOfMatch, float Warmup, float Match, float Cooldown, float StartingTime);
+	void ClientJoinMidgame(FName StateOfMatch, float Warmup, float Match, float Cooldown, float StartingTime, bool bTeamsMatch);
 
 	void HighPingWarning();
 	void StopHighPingWarning();
@@ -130,11 +135,11 @@ private:
 	float CooldownTime = 0.f;
 	uint32 CountdownInt = 0;
 
-	UPROPERTY(ReplicatedUsing = OnRep_MatchState)
+	//UPROPERTY(ReplicatedUsing = OnRep_MatchState)
 	FName MatchState;
 
-	UFUNCTION()
-	void OnRep_MatchState();
+	//UFUNCTION()
+	//void OnRep_MatchState();
 
 	UPROPERTY()
 	class UCharacterOverlay* CharacterOverlay = nullptr;
