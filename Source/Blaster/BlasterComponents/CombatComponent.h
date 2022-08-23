@@ -63,7 +63,7 @@ public:
 
 	void SetAiming(bool bIsAiming);
 
-	void PickupAmmo(EWeaponType WeaponType, int32 AmmoAmount);
+	bool PickupAmmo(EWeaponType WeaponType, int32 AmmoAmount);
 	
 	UPROPERTY(VisibleAnywhere)
 	bool bLocallyReloading = false;

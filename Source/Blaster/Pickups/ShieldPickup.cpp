@@ -20,8 +20,10 @@ void AShieldPickup::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AA
         UBuffComponent* Buff = BlasterCharacter->GetBuffComponent();
         if (Buff)
         {
-            Buff->AddNewShield(ShieldAmount, ShieldRegenDelay, ShieldRegenTime);
-            Destroy();
+            if (Buff->AddNewShield(ShieldAmount, ShieldRegenDelay, ShieldRegenTime))
+            {
+                Destroy();
+            }
         }
     }
 }

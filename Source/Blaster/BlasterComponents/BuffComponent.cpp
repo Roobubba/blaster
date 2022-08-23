@@ -118,10 +118,15 @@ void UBuffComponent::Heal(float DeltaTime)
 	}
 }
 
-void UBuffComponent::AddNewHealing(float HealthAmount, float HealingDelay, float HealingTime)
+bool UBuffComponent::AddNewHealing(float HealthAmount, float HealingDelay, float HealingTime)
 {
 	if (Character)
 	{
+		if (Character->GetHealth() >= Character->GetMaxHealth())
+		{
+			return false;
+		}
+
 		Healing HealingToAdd;
 		HealingToAdd.HealAmountRemaining = HealthAmount;
 		HealingToAdd.HealDelayRemaining = HealingDelay;
@@ -129,8 +134,17 @@ void UBuffComponent::AddNewHealing(float HealthAmount, float HealingDelay, float
 		HealingToAdd.TargetHealingRate = HealingTime > 0.f ? HealthAmount / HealingTime : 1000000.f;
 		HealingArray.Emplace(HealingToAdd);
 		
+		Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;
+		if (Controller)
+		{
+			Controller->ShowPickupAnnouncement(FString("Health"), HealingDelay + HealingTime);
+		}
+
 		UpdateHUDHealing();
+		return true;
 	}
+
+	return false;
 }
 
 void UBuffComponent::OnRep_TargetHealingPercent()
@@ -221,10 +235,16 @@ void UBuffComponent::RegenShield(float DeltaTime)
 	}
 }
 
-void UBuffComponent::AddNewShield(float ShieldAmount, float ShieldRegenDelay, float ShieldRegenTime)
+bool UBuffComponent::AddNewShield(float ShieldAmount, float ShieldRegenDelay, float ShieldRegenTime)
 {
 	if (Character)
 	{
+
+		if (Character->GetShield() >= Character->GetMaxShield())
+		{
+			return false;
+		}
+
 		ShieldRegen ShieldToAdd;
 		ShieldToAdd.ShieldRegenRemaining = ShieldAmount;
 		ShieldToAdd.ShieldRegenDelayRemaining = ShieldRegenDelay;
@@ -232,8 +252,17 @@ void UBuffComponent::AddNewShield(float ShieldAmount, float ShieldRegenDelay, fl
 		ShieldToAdd.TargetShieldRegenRate = ShieldRegenTime > 0.f ? ShieldAmount / ShieldRegenTime : 1000000.f;
 		ShieldRegenArray.Emplace(ShieldToAdd);
 		
+		Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;
+		if (Controller)
+		{
+			Controller->ShowPickupAnnouncement(FString("Shield"), ShieldRegenDelay + ShieldRegenTime);
+		}
+
 		UpdateHUDShieldRegen();
+		return true;
 	}
+
+	return false;
 }
 
 void UBuffComponent::OnRep_TargetShieldRegenPercent()
@@ -255,7 +284,7 @@ void UBuffComponent::BuffSpeed(float Multiplier, float SpeedBuffTime)
 
 		BaseSpeedMultiplier = Multiplier;
 
-		MulticastSpeedBuff(BaseSpeedMultiplier);
+		MulticastSpeedBuff(BaseSpeedMultiplier, SpeedBuffTime);
 	}
 }
 
@@ -263,16 +292,21 @@ void UBuffComponent::ResetSpeed()
 {
 	BaseSpeedMultiplier = 1.f;
 
-	MulticastSpeedBuff(BaseSpeedMultiplier);
+	MulticastSpeedBuff(BaseSpeedMultiplier, 0.f);
 }
 
-void UBuffComponent::MulticastSpeedBuff_Implementation(float NewSpeedMultiplier)
+void UBuffComponent::MulticastSpeedBuff_Implementation(float NewSpeedMultiplier, float BuffTime)
 {
 	BaseSpeedMultiplier = NewSpeedMultiplier;
 	
-	if (Character)
+	if (Character && BuffTime > 0.f)
 	{
 		Character->UpdateMovementSpeed();
+		Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;
+		if (Controller)
+		{
+			Controller->ShowPickupAnnouncement(FString("Speeeeeeeed!"), BuffTime);
+		}
 	}
 }
 
@@ -290,7 +324,7 @@ void UBuffComponent::BuffJump(float JumpMultiplier, float JumpBuffTime)
 
 		BaseJumpMultiplier = JumpMultiplier;
 
-		MulticastJumpBuff(BaseJumpMultiplier);
+		MulticastJumpBuff(BaseJumpMultiplier, JumpBuffTime);
 		UpdateJumpVerticalVelocity();
 	}
 }
@@ -298,7 +332,7 @@ void UBuffComponent::BuffJump(float JumpMultiplier, float JumpBuffTime)
 void UBuffComponent::ResetJump()
 {
 	BaseJumpMultiplier = 1.f;
-	MulticastJumpBuff(BaseJumpMultiplier);
+	MulticastJumpBuff(BaseJumpMultiplier, 0.f);
 	UpdateJumpVerticalVelocity();
 }
 
@@ -307,11 +341,20 @@ void UBuffComponent::SetInitialJumpVerticalVelocity(float InitialJump)
 	InitialJumpVerticalVelocity = InitialJump;
 }
 
-void UBuffComponent::MulticastJumpBuff_Implementation(float NewJumpMultiplier)
+void UBuffComponent::MulticastJumpBuff_Implementation(float NewJumpMultiplier, float BuffTime)
 {
 	BaseJumpMultiplier = NewJumpMultiplier;
 	
 	UpdateJumpVerticalVelocity();
+
+	if (BuffTime > 0.f && Character)
+	{
+		Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;
+		if (Controller)
+		{
+			Controller->ShowPickupAnnouncement(FString("Powered Jumps!"), BuffTime);
+		}
+	}
 }
 
 void UBuffComponent::UpdateJumpVerticalVelocity()
@@ -336,7 +379,7 @@ void UBuffComponent::ApplyDamageBuff(float DamageBuffMultiplier, float BuffTime)
 
 		BaseDamageMultiplier = DamageBuffMultiplier;
 
-		MulticastDamageBuff(BaseDamageMultiplier);
+		MulticastDamageBuff(BaseDamageMultiplier, BuffTime);
 	}
 }
 
@@ -344,10 +387,18 @@ void UBuffComponent::ResetDamageBuff()
 {
 	BaseDamageMultiplier = 1.f;
 
-	MulticastSpeedBuff(BaseDamageMultiplier);
+	MulticastSpeedBuff(BaseDamageMultiplier, 0.f);
 }
 
-void UBuffComponent::MulticastDamageBuff_Implementation(float NewDamageMultiplier)
+void UBuffComponent::MulticastDamageBuff_Implementation(float NewDamageMultiplier, float BuffTime)
 {
 	BaseDamageMultiplier = NewDamageMultiplier;
+	if (BuffTime > 0.f && Character)
+	{
+		Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;
+		if (Controller)
+		{
+			Controller->ShowPickupAnnouncement(FString("Double Damage"), BuffTime);
+		}
+	}
 }

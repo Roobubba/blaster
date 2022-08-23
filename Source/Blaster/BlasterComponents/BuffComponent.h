@@ -37,9 +37,9 @@ public:
 
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	void AddNewHealing(float HealthAmount, float HealingDelay, float HealingTime);
+	bool AddNewHealing(float HealthAmount, float HealingDelay, float HealingTime);
 	void UpdateHUDHealing();
-	void AddNewShield(float ShieldAmount, float ShieldRegenDelay, float ShieldRegenTime);
+	bool AddNewShield(float ShieldAmount, float ShieldRegenDelay, float ShieldRegenTime);
 	void UpdateHUDShieldRegen();
 
 	void BuffSpeed(float BaseSpeedMultiplier, float SpeedBuffTime);
@@ -98,7 +98,7 @@ private:
 	float BaseSpeedMultiplier = 1.f;
 
 	UFUNCTION(NetMulticast, Reliable)
-	void MulticastSpeedBuff(float NewSpeedMultiplier);
+	void MulticastSpeedBuff(float NewSpeedMultiplier, float BuffTime);
 
 	/*
 		Jump Buff
@@ -109,7 +109,7 @@ private:
 	float InitialJumpVerticalVelocity;
 
 	UFUNCTION(NetMulticast, Reliable)
-	void MulticastJumpBuff(float NewJumpMultiplier);
+	void MulticastJumpBuff(float NewJumpMultiplier, float BuffTime);
 
 	void UpdateJumpVerticalVelocity();
 
@@ -122,7 +122,7 @@ private:
 	float BaseDamageMultiplier = 1.f;
 
 	UFUNCTION(NetMulticast, Reliable)
-	void MulticastDamageBuff(float NewDamageMultiplier);
+	void MulticastDamageBuff(float NewDamageMultiplier, float BuffTime);
 	
 public:	
 	FORCEINLINE float GetSpeedMultiplier() const { return BaseSpeedMultiplier; }

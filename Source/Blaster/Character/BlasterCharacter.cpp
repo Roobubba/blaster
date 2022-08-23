@@ -517,34 +517,35 @@ void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const 
 	{
 		return;
 	}
-	
-	float DamageToHealth = FMath::Max(0.f, Damage - Shield);
-	Shield = FMath::Clamp(Shield - Damage, 0.f, MaxShield);	
-	Health = FMath::Clamp(Health - DamageToHealth, 0.f, MaxHealth);
 
-	UpdateHUDHealth();
-	UpdateHUDShield();
-	
-	if (BuffComponent)
-	{
-		BuffComponent->UpdateHUDHealing();
-		BuffComponent->UpdateHUDShieldRegen();
-	}
+	BlasterGameMode = BlasterGameMode == nullptr ? GetWorld()->GetAuthGameMode<ABlasterGameMode>() : BlasterGameMode;
+	if (BlasterGameMode)
+	{		
+		Damage = BlasterGameMode->CalculateDamage(InstigatorController, Controller, Damage);
+		float DamageToHealth = FMath::Max(0.f, Damage - Shield);
+		Shield = FMath::Clamp(Shield - Damage, 0.f, MaxShield);	
+		Health = FMath::Clamp(Health - DamageToHealth, 0.f, MaxHealth);
 
-	if (Health <= 0.f)
-	{
-		BlasterGameMode = BlasterGameMode == nullptr ? Cast<ABlasterGameMode>(UGameplayStatics::GetGameMode(this)) : BlasterGameMode;
-		if (BlasterGameMode)
+		UpdateHUDHealth();
+		UpdateHUDShield();
+		
+		if (BuffComponent)
+		{
+			BuffComponent->UpdateHUDHealing();
+			BuffComponent->UpdateHUDShieldRegen();
+		}
+
+		if (Health <= 0.f)
 		{
 			BlasterPlayerController = BlasterPlayerController == nullptr ? Cast<ABlasterPlayerController>(Controller) : BlasterPlayerController;
 			ABlasterPlayerController* AttackerController = Cast<ABlasterPlayerController>(InstigatorController);
 
 			BlasterGameMode->PlayerEliminated(this, BlasterPlayerController, AttackerController);
 		}
-	}
-	else
-	{
-		PlayHitReactMontage();
+		else
+		{
+			PlayHitReactMontage();
+		}
 	}
 }
 

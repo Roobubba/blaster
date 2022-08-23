@@ -19,6 +19,9 @@ public:
 
 	void UpdateTopScore(class ABlasterPlayerState* ScoringPlayer);
 
+	void RedTeamScores();
+	void BlueTeamScores();
+
 	UPROPERTY(Replicated)
 	TArray<ABlasterPlayerState*> TopScoringPlayers;
 

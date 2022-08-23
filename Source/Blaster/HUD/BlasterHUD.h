@@ -37,9 +37,8 @@ class BLASTER_API ABlasterHUD : public AHUD
 	
 public:
 
-	ABlasterHUD();
 	virtual void DrawHUD() override;
-	void ShowAnnouncement(FString AnnouncementString);
+
 	void AddEliminationAnnouncement(FString Attacker, FString Victim);
 
 	void AddChatMessage(const FString& Message);
@@ -47,6 +46,9 @@ public:
 
 	UFUNCTION()
 	void ChatInputCommitted(const FText& Text, ETextCommit::Type CommitMethod);
+
+	void AddPickupText(FString PickupAnnouncement, float DisplayTime);
+	void PickupTextTimerFinished(class UPickupText* MessageToRemove);
 
 protected:
 
@@ -67,20 +69,14 @@ private:
 	UPROPERTY(EditAnywhere)
 	float CrosshairSpreadMax = 16.f;
 
-	UPROPERTY(VisibleAnywhere)
-	UTimelineComponent* AnnouncementTimeline;
-	FOnTimelineFloat AnnouncementTextTrack;
+	UPROPERTY(EditAnywhere, Category = "PickupText")
+	TSubclassOf<UPickupText> PickupTextClass;
 
-	UFUNCTION()
-	void UpdateAnnouncementTextAlpha(float AnnouncementTextAlpha);
+	UPROPERTY()
+	TArray<UPickupText*> PickupTexts;
 
-	UPROPERTY(EditAnywhere)
-	UCurveFloat* AnnouncementTextCurve;
-
-	FTimerHandle AnnouncementTextTimerHandle;
-
-	UFUNCTION()
-	void AnnouncementTextTimerFinished();
+	float PickupTextBaseYPosition = 175.f;
+	float PickupTextBaseHeight = 40.f;
 
 	UPROPERTY(EditAnywhere, Category = "Player Stats")
 	TSubclassOf<class UUserWidget> CharacterOverlayClass;

@@ -1023,16 +1023,23 @@ void UCombatComponent::HandleRoundEnd()
 	EquippedWeapon = nullptr;
 }
 
-void UCombatComponent::PickupAmmo(EWeaponType WeaponType, int32 AmmoAmount)
+bool UCombatComponent::PickupAmmo(EWeaponType WeaponType, int32 AmmoAmount)
 {
+	bool bSuccess = false;
 	if (CarriedAmmoMap.Contains(WeaponType) && MaxCarriedAmmoMap.Contains(WeaponType))
 	{
-		CarriedAmmoMap[WeaponType] = FMath::Clamp(CarriedAmmoMap[WeaponType] + AmmoAmount, 0, MaxCarriedAmmoMap[WeaponType]);
-		UpdateCarriedAmmo();
+		if (CarriedAmmoMap[WeaponType] < MaxCarriedAmmoMap[WeaponType])
+		{
+			CarriedAmmoMap[WeaponType] = FMath::Clamp(CarriedAmmoMap[WeaponType] + AmmoAmount, 0, MaxCarriedAmmoMap[WeaponType]);
+			UpdateCarriedAmmo();
+			bSuccess = true;
+		}
 	}
 
-	if (EquippedWeapon && EquippedWeapon->GetIsEmpty() && EquippedWeapon->GetWeaponType() == WeaponType)
+	if (EquippedWeapon && EquippedWeapon->GetIsEmpty() && EquippedWeapon->GetWeaponType() == WeaponType && bSuccess)
 	{
 		Reload();
 	}
+	
+	return bSuccess;
 }

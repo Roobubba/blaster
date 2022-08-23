@@ -14,12 +14,7 @@
 #include "ChatInput.h"
 #include "Components/EditableText.h"
 #include "Blaster/PlayerController/BlasterPlayerController.h"
-
-ABlasterHUD::ABlasterHUD()
-{
-    AnnouncementTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("TimelineComponent"));
-    AnnouncementTextTrack.BindDynamic(this, &ABlasterHUD::UpdateAnnouncementTextAlpha);
-}
+#include "PickupText.h"
 
 void ABlasterHUD::BeginPlay()
 {
@@ -51,11 +46,6 @@ void ABlasterHUD::AddAnnouncement()
 
     if (PlayerController && AnnouncementClass && !Announcement)
     {
-        //if (Announcement)
-        //{
-        //    Announcement->RemoveFromViewport();
-        //}
-
         Announcement = CreateWidget<UAnnouncement>(PlayerController, AnnouncementClass);
         Announcement->AddToViewport();
         Announcement->SetVisibility(ESlateVisibility::Hidden);
@@ -143,44 +133,74 @@ void ABlasterHUD::DrawCrosshair(UTexture2D* Texture, FVector2D ViewportCentre, F
     );
 }
 
-void ABlasterHUD::ShowAnnouncement(FString AnnouncementString)
+void ABlasterHUD::AddPickupText(FString PickupAnnouncement, float DisplayTime)
 {
-    if (AnnouncementTimeline && AnnouncementTextCurve)
+    UE_LOG(LogTemp, Warning, TEXT("AddPickupText called"));
+    OwningPlayerController = OwningPlayerController == nullptr ? GetOwningPlayerController() : OwningPlayerController;
+
+    if (OwningPlayerController && PickupTextClass)
     {
-        AnnouncementTimeline->AddInterpFloat(AnnouncementTextCurve, AnnouncementTextTrack);
-        AnnouncementTimeline->PlayFromStart();
-            
-        if (CharacterOverlay && CharacterOverlay->AnnouncementText)
+        UE_LOG(LogTemp, Warning, TEXT("(OwningPlayerController && PickupTextClass)"));
+        UPickupText* PickupTextWidget = CreateWidget<UPickupText>(OwningPlayerController, PickupTextClass);
+        if (PickupTextWidget)
         {
-            //CharacterOverlay->AnnouncementText->SetVisibility(ESlateVisibility::Visible);
-            CharacterOverlay->AnnouncementText->SetRenderOpacity(0.f);
+            PickupTextWidget->AddToViewport();
+            PickupTextWidget->SetVisibility(ESlateVisibility::Visible);
+            PickupTextWidget->SetRenderOpacity(1.f);
+
+            UE_LOG(LogTemp, Warning, TEXT("(PickupTextWidget)"));
+            PickupTextWidget->SetPickupText(PickupAnnouncement, DisplayTime, this);
+
+            PickupTexts.Add(PickupTextWidget);
+
+            PickupTexts.Sort([] (const UPickupText& Val1, const UPickupText& Val2)
+            {
+                return Val1.GetRemainingTime() > Val2.GetRemainingTime();
+
+            });
+
+            for (int32 i = 0; i < PickupTexts.Num(); i++)
+            {
+                UPickupText* PickupText = PickupTexts[i];
+                if (PickupText && PickupText->PickupTextBox)
+                {
+                    UCanvasPanelSlot* CanvasSlot = UWidgetLayoutLibrary::SlotAsCanvasSlot(PickupText->PickupTextBox);
+                    if (CanvasSlot)
+                    {
+                        FVector2D Position = FVector2D(36.f, PickupTextBaseYPosition + i * PickupTextBaseHeight);
+                        CanvasSlot->SetPosition(Position);
+                    }
+                }
+            }
+
+
+            //for (UPickupText* PickupText : PickupTexts)
+            //{
+            //    if (PickupText && PickupText->PickupTextBox)
+            //    {
+            //        UCanvasPanelSlot* CanvasSlot = UWidgetLayoutLibrary::SlotAsCanvasSlot(PickupText->PickupTextBox);
+            //        if (CanvasSlot)
+            //        {
+            //            FVector2D Position = CanvasSlot->GetPosition();
+            //            FVector2D NewPosition(Position.X, Position.Y + CanvasSlot->GetSize().Y);
+            //            CanvasSlot->SetPosition(NewPosition);
+            //        }
+            //    }
+            //}
+
+            
         }
-
-        float CurveTime = AnnouncementTimeline->GetTimelineLength();
-        GetWorldTimerManager().SetTimer(
-            AnnouncementTextTimerHandle,
-            this,
-            &ABlasterHUD::AnnouncementTextTimerFinished,
-            CurveTime
-        );
     }
 }
 
-void ABlasterHUD::UpdateAnnouncementTextAlpha(float ElimTextAlpha)
+void ABlasterHUD::PickupTextTimerFinished(UPickupText* MessageToRemove)
 {
-    if (CharacterOverlay && CharacterOverlay->AnnouncementText)
+    if (PickupTexts.Contains(MessageToRemove))
     {
-        CharacterOverlay->AnnouncementText->SetRenderOpacity(ElimTextAlpha);
+        PickupTexts.Remove(MessageToRemove);
     }
-}
 
-void ABlasterHUD::AnnouncementTextTimerFinished()
-{
-    if (CharacterOverlay && CharacterOverlay->AnnouncementText)
-    {
-        //CharacterOverlay->ElimText->SetVisibility(ESlateVisibility::Hidden);
-        CharacterOverlay->AnnouncementText->SetRenderOpacity(0.f);
-    }
+    MessageToRemove->RemoveFromParent();
 }
 
 void ABlasterHUD::AddEliminationAnnouncement(FString Attacker, FString Victim)
