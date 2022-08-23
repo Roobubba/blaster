@@ -50,7 +50,7 @@ public:
 
 	void SetHUDAnnouncementCountdown(float CountdownTime);
 
-	void ShowPickupAnnouncement(FString PickupAnnouncement, float DisplayTime);
+	void ShowPickupAnnouncement(FString PickupAnnouncement, float DisplayTime, FColor Colour);
 
 	virtual void ReceivedPlayer() override; // earliest time to sync with server clock
 	void OnMatchStateSet(FName State);

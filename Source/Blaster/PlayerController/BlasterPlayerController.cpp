@@ -1020,13 +1020,13 @@ void ABlasterPlayerController::StopHighPingWarning()
     }
 }
 
-void ABlasterPlayerController::ShowPickupAnnouncement(FString PickupAnnouncement, float DisplayTime)
+void ABlasterPlayerController::ShowPickupAnnouncement(FString PickupAnnouncement, float DisplayTime, FColor Colour)
 {
     UE_LOG(LogTemp, Warning, TEXT("ABlasterPlayerController::ShowPickupAnnouncement"));
     BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
 
     if (BlasterHUD && IsLocalPlayerController())
     {
-        BlasterHUD->AddPickupText(PickupAnnouncement, DisplayTime);
+        BlasterHUD->AddPickupText(PickupAnnouncement, DisplayTime, Colour);
     }
 }

@@ -133,7 +133,7 @@ void ABlasterHUD::DrawCrosshair(UTexture2D* Texture, FVector2D ViewportCentre, F
     );
 }
 
-void ABlasterHUD::AddPickupText(FString PickupAnnouncement, float DisplayTime)
+void ABlasterHUD::AddPickupText(FString PickupAnnouncement, float DisplayTime, FColor Colour)
 {
     UE_LOG(LogTemp, Warning, TEXT("AddPickupText called"));
     OwningPlayerController = OwningPlayerController == nullptr ? GetOwningPlayerController() : OwningPlayerController;
@@ -149,7 +149,7 @@ void ABlasterHUD::AddPickupText(FString PickupAnnouncement, float DisplayTime)
             PickupTextWidget->SetRenderOpacity(1.f);
 
             UE_LOG(LogTemp, Warning, TEXT("(PickupTextWidget)"));
-            PickupTextWidget->SetPickupText(PickupAnnouncement, DisplayTime, this);
+            PickupTextWidget->SetPickupText(PickupAnnouncement, DisplayTime, Colour, this);
 
             PickupTexts.Add(PickupTextWidget);
 

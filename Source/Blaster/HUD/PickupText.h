@@ -23,7 +23,7 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* PickupText;
 
-	void SetPickupText(FString PickupText, float DisplayTime, class ABlasterHUD* BlasterHUD);
+	void SetPickupText(FString PickupText, float DisplayTime, FColor Colour, class ABlasterHUD* BlasterHUD);
 
 protected:
 

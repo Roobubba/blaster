@@ -13,7 +13,7 @@ void UPickupText::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
     RemainingTime = FMath::Max(0.f, RemainingTime - InDeltaTime);
 }
 
-void UPickupText::SetPickupText(FString PickupTextString, float DisplayTime, ABlasterHUD* ParentBlasterHUD)
+void UPickupText::SetPickupText(FString PickupTextString, float DisplayTime, FColor Colour, ABlasterHUD* ParentBlasterHUD)
 {
     AnnouncementTextTrack.BindDynamic(this, &UPickupText::UpdateAnnouncementTextAlpha);
     UE_LOG(LogTemp, Display, TEXT("SetPickupText called on new UPickupText: %s, DisplayTime =  %f"), *PickupTextString, DisplayTime);
@@ -32,6 +32,7 @@ void UPickupText::SetPickupText(FString PickupTextString, float DisplayTime, ABl
         {
             UE_LOG(LogTemp, Display, TEXT("(PickupText)"));
             PickupText->SetText(FText::FromString(PickupTextString));
+            PickupText->SetColorAndOpacity(FSlateColor(Colour));
             PickupText->SetRenderOpacity(0.f);
             PickupText->SetVisibility(ESlateVisibility::Visible);
         }

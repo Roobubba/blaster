@@ -47,7 +47,7 @@ public:
 	UFUNCTION()
 	void ChatInputCommitted(const FText& Text, ETextCommit::Type CommitMethod);
 
-	void AddPickupText(FString PickupAnnouncement, float DisplayTime);
+	void AddPickupText(FString PickupAnnouncement, float DisplayTime, FColor Colour);
 	void PickupTextTimerFinished(class UPickupText* MessageToRemove);
 
 protected:

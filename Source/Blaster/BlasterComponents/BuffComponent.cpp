@@ -137,7 +137,7 @@ bool UBuffComponent::AddNewHealing(float HealthAmount, float HealingDelay, float
 		Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;
 		if (Controller)
 		{
-			Controller->ShowPickupAnnouncement(FString("Health"), HealingDelay + HealingTime);
+			Controller->ShowPickupAnnouncement(FString("Health"), HealingDelay + HealingTime, FColor::Red);
 		}
 
 		UpdateHUDHealing();
@@ -255,7 +255,7 @@ bool UBuffComponent::AddNewShield(float ShieldAmount, float ShieldRegenDelay, fl
 		Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;
 		if (Controller)
 		{
-			Controller->ShowPickupAnnouncement(FString("Shield"), ShieldRegenDelay + ShieldRegenTime);
+			Controller->ShowPickupAnnouncement(FString("Shield"), ShieldRegenDelay + ShieldRegenTime, FColor::Yellow);
 		}
 
 		UpdateHUDShieldRegen();
@@ -305,7 +305,7 @@ void UBuffComponent::MulticastSpeedBuff_Implementation(float NewSpeedMultiplier,
 		Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;
 		if (Controller)
 		{
-			Controller->ShowPickupAnnouncement(FString("Speeeeeeeed!"), BuffTime);
+			Controller->ShowPickupAnnouncement(FString("Speeeeeeeed!"), BuffTime, FColor::Cyan);
 		}
 	}
 }
@@ -352,7 +352,7 @@ void UBuffComponent::MulticastJumpBuff_Implementation(float NewJumpMultiplier, f
 		Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;
 		if (Controller)
 		{
-			Controller->ShowPickupAnnouncement(FString("Powered Jumps!"), BuffTime);
+			Controller->ShowPickupAnnouncement(FString("Powered Jumps!"), BuffTime, FColor::Purple);
 		}
 	}
 }
@@ -398,7 +398,7 @@ void UBuffComponent::MulticastDamageBuff_Implementation(float NewDamageMultiplie
 		Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;
 		if (Controller)
 		{
-			Controller->ShowPickupAnnouncement(FString("Double Damage"), BuffTime);
+			Controller->ShowPickupAnnouncement(FString("Double Damage"), BuffTime, FColor::Orange);
 		}
 	}
 }
