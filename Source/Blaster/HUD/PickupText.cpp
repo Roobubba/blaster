@@ -16,21 +16,17 @@ void UPickupText::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 void UPickupText::SetPickupText(FString PickupTextString, float DisplayTime, FColor Colour, ABlasterHUD* ParentBlasterHUD)
 {
     AnnouncementTextTrack.BindDynamic(this, &UPickupText::UpdateAnnouncementTextAlpha);
-    UE_LOG(LogTemp, Display, TEXT("SetPickupText called on new UPickupText: %s, DisplayTime =  %f"), *PickupTextString, DisplayTime);
     
     if (AnnouncementTextCurve && DisplayTime > 0.f)
     {
         RemainingTime = DisplayTime;
         AnnouncementTimeline.AddInterpFloat(AnnouncementTextCurve, AnnouncementTextTrack);
-        UE_LOG(LogTemp, Display, TEXT("(AnnouncementTextCurve && DisplayTime > 0.f)"));
         float NewRate = AnnouncementTimeline.GetTimelineLength() / DisplayTime;
-        UE_LOG(LogTemp, Display, TEXT("NewRate =  %f"), NewRate);
 
         AnnouncementTimeline.SetPlayRate(NewRate);   
             
         if (PickupText)
         {
-            UE_LOG(LogTemp, Display, TEXT("(PickupText)"));
             PickupText->SetText(FText::FromString(PickupTextString));
             PickupText->SetColorAndOpacity(FSlateColor(Colour));
             PickupText->SetRenderOpacity(0.f);
@@ -46,7 +42,7 @@ void UPickupText::SetPickupText(FString PickupTextString, float DisplayTime, FCo
             AnnouncementTextTimerHandle,
             this,
             &UPickupText::PickupTextTimerFinished,
-            DisplayTime //CurveTime
+            DisplayTime
         );
     }
 }
@@ -55,14 +51,12 @@ void UPickupText::UpdateAnnouncementTextAlpha(float AnnouncementTextAlpha)
 {
     if (PickupText)
     {
-        UE_LOG(LogTemp, Display, TEXT("AnnouncementTextAlpha = %f"), AnnouncementTextAlpha);
         PickupText->SetRenderOpacity(AnnouncementTextAlpha);
     }
 }
 
 void UPickupText::PickupTextTimerFinished()
 {
-    UE_LOG(LogTemp, Display, TEXT("PickupTextTimerFinished()"));
     if (BlasterHUD)
     {
         BlasterHUD->PickupTextTimerFinished(this);

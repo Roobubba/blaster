@@ -135,20 +135,16 @@ void ABlasterHUD::DrawCrosshair(UTexture2D* Texture, FVector2D ViewportCentre, F
 
 void ABlasterHUD::AddPickupText(FString PickupAnnouncement, float DisplayTime, FColor Colour)
 {
-    UE_LOG(LogTemp, Warning, TEXT("AddPickupText called"));
     OwningPlayerController = OwningPlayerController == nullptr ? GetOwningPlayerController() : OwningPlayerController;
 
     if (OwningPlayerController && PickupTextClass)
     {
-        UE_LOG(LogTemp, Warning, TEXT("(OwningPlayerController && PickupTextClass)"));
         UPickupText* PickupTextWidget = CreateWidget<UPickupText>(OwningPlayerController, PickupTextClass);
         if (PickupTextWidget)
         {
             PickupTextWidget->AddToViewport();
             PickupTextWidget->SetVisibility(ESlateVisibility::Visible);
             PickupTextWidget->SetRenderOpacity(1.f);
-
-            UE_LOG(LogTemp, Warning, TEXT("(PickupTextWidget)"));
             PickupTextWidget->SetPickupText(PickupAnnouncement, DisplayTime, Colour, this);
 
             PickupTexts.Add(PickupTextWidget);
@@ -172,23 +168,7 @@ void ABlasterHUD::AddPickupText(FString PickupAnnouncement, float DisplayTime, F
                     }
                 }
             }
-
-
-            //for (UPickupText* PickupText : PickupTexts)
-            //{
-            //    if (PickupText && PickupText->PickupTextBox)
-            //    {
-            //        UCanvasPanelSlot* CanvasSlot = UWidgetLayoutLibrary::SlotAsCanvasSlot(PickupText->PickupTextBox);
-            //        if (CanvasSlot)
-            //        {
-            //            FVector2D Position = CanvasSlot->GetPosition();
-            //            FVector2D NewPosition(Position.X, Position.Y + CanvasSlot->GetSize().Y);
-            //            CanvasSlot->SetPosition(NewPosition);
-            //        }
-            //    }
-            //}
-
-            
+           
         }
     }
 }
@@ -201,6 +181,16 @@ void ABlasterHUD::PickupTextTimerFinished(UPickupText* MessageToRemove)
     }
 
     MessageToRemove->RemoveFromParent();
+}
+
+void ABlasterHUD::RemoveAllPickupTexts()
+{
+    for (auto PickupText : PickupTexts)
+    {
+        PickupText->RemoveFromParent();
+    }
+
+    PickupTexts.Empty();
 }
 
 void ABlasterHUD::AddEliminationAnnouncement(FString Attacker, FString Victim)

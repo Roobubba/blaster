@@ -49,7 +49,7 @@ public:
 
 	void AddPickupText(FString PickupAnnouncement, float DisplayTime, FColor Colour);
 	void PickupTextTimerFinished(class UPickupText* MessageToRemove);
-
+	void RemoveAllPickupTexts();
 protected:
 
 	virtual void BeginPlay() override;

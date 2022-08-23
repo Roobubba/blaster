@@ -307,6 +307,7 @@ void ABlasterCharacter::MulticastEliminate_Implementation(bool bPlayerLeftGame)
 		BlasterPlayerController->SetHUDWeaponType(EWeaponType::EWT_MAX);
 		BlasterPlayerController->SetHUDCarriedAmmo(0);
 		BlasterPlayerController->SetHUDWeaponAmmo(0);
+		BlasterPlayerController->RemoveAllPickupTexts();
 	}
 
 	bEliminated = true;
@@ -838,11 +839,19 @@ void ABlasterCharacter::HideCharacterIfCameraClose()
 	{
 		GetMesh()->SetVisibility(false);
 		ToggleWeaponsIfCameraClose(true);
+		if (CrownComponent)
+		{
+			CrownComponent->bHiddenInGame = true;
+		}
 	}
 	else
 	{
 		GetMesh()->SetVisibility(true);
 		ToggleWeaponsIfCameraClose(false);
+		if (CrownComponent)
+		{
+			CrownComponent->bHiddenInGame = false;
+		}
 	}
 }
 

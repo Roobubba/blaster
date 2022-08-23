@@ -1032,6 +1032,46 @@ bool UCombatComponent::PickupAmmo(EWeaponType WeaponType, int32 AmmoAmount)
 		{
 			CarriedAmmoMap[WeaponType] = FMath::Clamp(CarriedAmmoMap[WeaponType] + AmmoAmount, 0, MaxCarriedAmmoMap[WeaponType]);
 			UpdateCarriedAmmo();
+
+			Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;
+			if (Controller)
+			{
+				FString AmmoType;
+				bool Show = true;
+				switch (WeaponType)
+				{
+				case EWeaponType::EWT_AssaultRifle:
+					AmmoType = "Assault rifle rounds";
+					break;
+				case EWeaponType::EWT_GrenadeLauncher:
+					AmmoType = "Grenade launcher ammo";
+					break;
+				case EWeaponType::EWT_Pistol:
+					AmmoType = "Pistol rounds";
+					break;
+				case EWeaponType::EWT_RocketLauncher:
+					AmmoType = "Rocket launcher ammo";
+					break;
+				case EWeaponType::EWT_Shotgun:
+					AmmoType = "Shotgun shells";
+					break;
+				case EWeaponType::EWT_SniperRifle:
+					AmmoType = "Sniper rifle rounds";
+					break;
+				case EWeaponType::EWT_SubmachineGun:
+					AmmoType = "SMG ammo";
+					break;
+				default:
+					Show = false;
+					break;
+				}
+
+				if (Show)
+				{
+					Controller->ShowPickupAnnouncement(AmmoType, 1.5f, FColor::Silver);
+				}
+			}
+
 			bSuccess = true;
 		}
 	}

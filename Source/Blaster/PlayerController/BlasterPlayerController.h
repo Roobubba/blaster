@@ -51,6 +51,7 @@ public:
 	void SetHUDAnnouncementCountdown(float CountdownTime);
 
 	void ShowPickupAnnouncement(FString PickupAnnouncement, float DisplayTime, FColor Colour);
+	void RemoveAllPickupTexts();
 
 	virtual void ReceivedPlayer() override; // earliest time to sync with server clock
 	void OnMatchStateSet(FName State);
@@ -105,6 +106,9 @@ protected:
 
 	UFUNCTION(Client, Reliable)
 	void ClientReceiveChatMessage(const FString& Message);
+
+	UFUNCTION(Client, Reliable)
+	void ClientAddPickupText(const FString& PickupAnnouncement, float DisplayTime, const FColor& Colour);
 
 private:
 
