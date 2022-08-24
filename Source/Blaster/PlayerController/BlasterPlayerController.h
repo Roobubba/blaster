@@ -115,6 +115,9 @@ protected:
 	UFUNCTION(Client, Reliable)
 	void ClientAddPickupText(const FString& PickupAnnouncement, float DisplayTime, const FColor& Colour);
 
+	FString GetInfoText(const TArray<class ABlasterPlayerState*>& Players);
+	FString GetTeamsInfoText(class ABlasterGameState* BlasterGameState);
+
 private:
 
 	UPROPERTY(EditAnywhere, Category = HUD)
@@ -135,11 +138,13 @@ private:
 	float CooldownTime = 0.f;
 	uint32 CountdownInt = 0;
 
-	//UPROPERTY(ReplicatedUsing = OnRep_MatchState)
+	UPROPERTY(ReplicatedUsing = OnRep_MatchState)
 	FName MatchState;
 
-	//UFUNCTION()
-	//void OnRep_MatchState();
+	UFUNCTION()
+	void OnRep_MatchState();
+
+	bool bIsTeamsMatch = false;
 
 	UPROPERTY()
 	class UCharacterOverlay* CharacterOverlay = nullptr;
