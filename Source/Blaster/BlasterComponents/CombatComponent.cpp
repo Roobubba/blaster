@@ -33,6 +33,7 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(UCombatComponent, CombatState);
 	DOREPLIFETIME_CONDITION(UCombatComponent, CarriedAmmo, COND_OwnerOnly);
 	DOREPLIFETIME(UCombatComponent, Grenades);
+	DOREPLIFETIME(UCombatComponent, bHoldingTheFlagon);
 }
 
 void UCombatComponent::BeginPlay()
@@ -238,17 +239,30 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 		return;
 	}
 
-	if (EquippedWeapon != nullptr && SecondaryWeapon == nullptr)
+	if (WeaponToEquip->GetWeaponType() == EWeaponType::EWT_Flagon)
 	{
-		EquipSecondaryWeapon(WeaponToEquip);
+		bHoldingTheFlagon = true;
+		AttachFlagonToLeftHand(WeaponToEquip);
+		Character->GetCharacterMovement()->bOrientRotationToMovement = true;
+		Character->bUseControllerRotationYaw = false;
+		WeaponToEquip->SetWeaponState(EWeaponState::EWS_Equipped);
+		WeaponToEquip->SetOwner(Character);
+		Character->UpdateMovementSpeed();
 	}
 	else
 	{
-		EquipPrimaryWeapon(WeaponToEquip);
-	}
+		if (EquippedWeapon != nullptr && SecondaryWeapon == nullptr)
+		{
+			EquipSecondaryWeapon(WeaponToEquip);
+		}
+		else
+		{
+			EquipPrimaryWeapon(WeaponToEquip);
+		}
 
-	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
-	Character->bUseControllerRotationYaw = true;
+		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
+		Character->bUseControllerRotationYaw = true;
+	}
 }
 
 void UCombatComponent::SwapWeapons()
@@ -334,6 +348,20 @@ void UCombatComponent::AttachActorToRightHand(AActor* ActorToAttach)
 	if (HandSocket)
 	{
 		HandSocket->AttachActor(ActorToAttach, Character->GetMesh());
+	}
+}
+
+void UCombatComponent::AttachFlagonToLeftHand(AWeapon* Flagon)
+{
+	if (Character == nullptr || Character->GetMesh() == nullptr || Flagon == nullptr)
+	{
+		return;
+	}
+
+	const USkeletalMeshSocket* FlagonSocket = Character->GetMesh()->GetSocketByName(FName("FlagonSocket"));
+	if (FlagonSocket)
+	{
+		FlagonSocket->AttachActor(Flagon, Character->GetMesh());
 	}
 }
 
@@ -1082,4 +1110,12 @@ bool UCombatComponent::PickupAmmo(EWeaponType WeaponType, int32 AmmoAmount)
 	}
 	
 	return bSuccess;
+}
+
+void UCombatComponent::OnRep_HoldingTheFlagon()
+{
+	if (Character)
+	{
+		Character->UpdateMovementSpeed();
+	}
 }

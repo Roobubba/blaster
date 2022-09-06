@@ -264,6 +264,14 @@ void ABlasterCharacter::Tick(float DeltaTime)
 
 void ABlasterCharacter::RotateInPlace(float DeltaTime)
 {
+	if (CombatComponent && CombatComponent->bHoldingTheFlagon)
+	{
+		bUseControllerRotationYaw = false;
+		GetCharacterMovement()->bOrientRotationToMovement = true;
+		TurningInPlace = ETurningInPlace::ETIP_NotTurning;		
+		return;
+	}
+
 	if (bDisableGameplay) 
 	{
 		bUseControllerRotationYaw = false;
@@ -709,7 +717,15 @@ void ABlasterCharacter::UpdateMovementSpeed()
 	
 	if (GetMovementComponent())
 	{
-		GetCharacterMovement()->MaxWalkSpeed = IsAiming() ? BuffMultiplier * AimWalkSpeed : BuffMultiplier * BaseWalkSpeed;
+		if (IsHoldingTheFlagon())
+		{
+			GetCharacterMovement()->MaxWalkSpeed = BuffMultiplier * AimWalkSpeed;
+		}
+		else
+		{
+			GetCharacterMovement()->MaxWalkSpeed = IsAiming() ? BuffMultiplier * AimWalkSpeed : BuffMultiplier * BaseWalkSpeed;
+		}
+
 		GetCharacterMovement()->MaxWalkSpeedCrouched = BuffMultiplier * CrouchWalkSpeed;
 	}
 }
@@ -1216,4 +1232,9 @@ bool ABlasterCharacter::IsAiming() const
 bool ABlasterCharacter::IsLocallyReloading() const
 {
 	return (CombatComponent && CombatComponent->bLocallyReloading);
+}
+
+bool ABlasterCharacter::IsHoldingTheFlagon() const
+{
+	return (CombatComponent && CombatComponent->bHoldingTheFlagon);
 }
