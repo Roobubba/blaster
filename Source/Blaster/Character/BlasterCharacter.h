@@ -103,6 +103,9 @@ protected:
 	void DropOrDestroyWeapon(AWeapon* Weapon);
 	void DropOrDestroyWeapons();
 
+	void OnPlayerStateInitialized();
+	void SetSpawnPoint();
+
 	// Hit Boxes for Server side rewind
 	// Naming deliberately to match character bone names
 
@@ -352,8 +355,6 @@ private:
 
 public:	
 	void SetOverlappingWeapon(AWeapon* Weapon);
-	bool IsWeaponEquipped() const;
-	bool IsAiming() const;
 	FORCEINLINE float GetAO_Yaw() const { return AO_Yaw; }
 	FORCEINLINE float GetAO_Pitch() const { return AO_Pitch; }
 	FORCEINLINE ETurningInPlace GetTurningInPlace() const { return TurningInPlace; }
@@ -380,7 +381,12 @@ public:
 	FORCEINLINE float GetBaseWalkSpeed() const { return BaseWalkSpeed; }
 	FORCEINLINE void SetHealth(float Amount) { Health = Amount; }
 	FORCEINLINE void SetShield(float Amount) { Shield = Amount; }
-	bool IsLocallyReloading() const;
+	FORCEINLINE bool IsLocallyReloading() const;
 	FORCEINLINE bool IsHoldingTheFlagon() const;
+	FORCEINLINE bool IsWeaponEquipped() const;
+	FORCEINLINE bool IsAiming() const;
+	ETeam GetTeam();
+	void SetHoldingTheFlagon(bool bHolding);
+	void FlagonDropped();
 };
 

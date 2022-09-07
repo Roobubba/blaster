@@ -26,6 +26,7 @@
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
 #include "Blaster/GameState/BlasterGameState.h"
+#include "Blaster/PlayerStart/TeamPlayerStart.h"
 
 ABlasterCharacter::ABlasterCharacter()
 {
@@ -338,6 +339,11 @@ void ABlasterCharacter::MulticastEliminate_Implementation(bool bPlayerLeftGame)
 
 	if (CombatComponent)
 	{
+		if (CombatComponent->bHoldingTheFlagon && CombatComponent->TheFlagonWeapon)
+		{
+			CombatComponent->TheFlagonWeapon->Dropped();
+		}
+
 		CombatComponent->FireButtonPressed(false);
 	}
 
@@ -469,6 +475,12 @@ void ABlasterCharacter::DropOrDestroyWeapons()
 	if (CombatComponent && CombatComponent->SecondaryWeapon)
 	{
 		DropOrDestroyWeapon(CombatComponent->SecondaryWeapon);
+	}
+
+	if (CombatComponent && CombatComponent->TheFlagonWeapon)
+	{
+		CombatComponent->TheFlagonWeapon->Dropped();
+		CombatComponent->bHoldingTheFlagon = false;
 	}
 }
 
@@ -673,6 +685,11 @@ void ABlasterCharacter::EquipButtonPressed()
 
 	if (CombatComponent)
 	{
+		if (CombatComponent->bHoldingTheFlagon)
+		{
+			return;
+		}
+
 		if (CombatComponent->CombatState == ECombatState::ECS_Unoccupied)
 		{
 			ServerEquipButtonPressed();
@@ -734,6 +751,11 @@ void ABlasterCharacter::CrouchButtonPressed()
 {
 	if (bDisableGameplay) return;
 
+	if (CombatComponent && CombatComponent->bHoldingTheFlagon)
+	{
+		return;
+	}
+
 	if (bIsCrouched)
 	{
 		UnCrouch();
@@ -748,8 +770,8 @@ void ABlasterCharacter::AimButtonPressed()
 {
 	if (bDisableGameplay) return;
 
-	if (CombatComponent)
-	{
+	if (CombatComponent && !CombatComponent->bHoldingTheFlagon)
+	{	
 		CombatComponent->SetAiming(true);
 	}
 }
@@ -768,7 +790,7 @@ void ABlasterCharacter::FireButtonPressed()
 {
 	if (bDisableGameplay) return;
 
-	if (CombatComponent)
+	if (CombatComponent && !CombatComponent->bHoldingTheFlagon)
 	{
 		CombatComponent->FireButtonPressed(true);	
 	}
@@ -778,7 +800,7 @@ void ABlasterCharacter::FireButtonReleased()
 {
 	if (bDisableGameplay) return;
 
-	if (CombatComponent)
+	if (CombatComponent && !CombatComponent->bHoldingTheFlagon)
 	{
 		CombatComponent->FireButtonPressed(false);	
 	}
@@ -788,7 +810,7 @@ void ABlasterCharacter::ReloadButtonPressed()
 {
 	if (bDisableGameplay) return;
 
-	if (CombatComponent)
+	if (CombatComponent && !CombatComponent->bHoldingTheFlagon)
 	{
 		CombatComponent->Reload();	
 	}
@@ -796,7 +818,7 @@ void ABlasterCharacter::ReloadButtonPressed()
 
 void ABlasterCharacter::GrenadeButtonPressed()
 {
-	if (CombatComponent)
+	if (CombatComponent && !CombatComponent->bHoldingTheFlagon)
 	{
 		CombatComponent->ThrowGrenade();
 	}
@@ -875,10 +897,19 @@ void ABlasterCharacter::ToggleWeaponsIfCameraClose(bool bShowWeapons)
 {
 	if (CombatComponent)
 	{
-		if (CombatComponent->EquippedWeapon && CombatComponent->EquippedWeapon->GetWeaponMesh())
+		if (CombatComponent->bHoldingTheFlagon && CombatComponent->GetFlagonStaticMesh())
 		{
-			CombatComponent->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = bShowWeapons;
+			CombatComponent->GetFlagonStaticMesh()->bOwnerNoSee = bShowWeapons;
 		}
+
+		if (CombatComponent->EquippedWeapon)
+		{
+			if (CombatComponent->EquippedWeapon->GetWeaponMesh())
+			{
+				CombatComponent->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = bShowWeapons;
+			}
+		}
+
 		if (CombatComponent->SecondaryWeapon && CombatComponent->SecondaryWeapon->GetWeaponMesh())
 		{
 			CombatComponent->SecondaryWeapon->GetWeaponMesh()->bOwnerNoSee = bShowWeapons;
@@ -1033,6 +1064,11 @@ void ABlasterCharacter::Jump()
 {
 	if (bDisableGameplay) return;
 
+	if (CombatComponent && CombatComponent->bHoldingTheFlagon)
+	{
+		return;
+	}
+
 	if (bIsCrouched)
 	{
 		UnCrouch();
@@ -1065,7 +1101,6 @@ void ABlasterCharacter::TurnInPlace(float DeltaTime)
 		}
 	}
 }
-
 
 AWeapon* ABlasterCharacter::GetEquippedWeapon()
 {
@@ -1152,15 +1187,45 @@ void ABlasterCharacter::PollInit()
 		BlasterPlayerState = GetPlayerState<ABlasterPlayerState>();
 		if (BlasterPlayerState)
 		{
-			BlasterPlayerState->AddToScore(0.f);
-			BlasterPlayerState->AddToDefeats(0);
-			SetTeamColour(BlasterPlayerState->GetTeam());
-	
+			OnPlayerStateInitialized();
+
 			ABlasterGameState* BlasterGameState = Cast<ABlasterGameState>(UGameplayStatics::GetGameState(this));
 			if (BlasterGameState && BlasterGameState->TopScoringPlayers.Contains(BlasterPlayerState))
 			{
 				MulticastGainedTheLead();
 			}
+		}
+	}
+}
+
+void ABlasterCharacter::OnPlayerStateInitialized()
+{
+	BlasterPlayerState->AddToScore(0.f);
+	BlasterPlayerState->AddToDefeats(0);
+	SetTeamColour(BlasterPlayerState->GetTeam());
+	SetSpawnPoint();
+}
+
+void ABlasterCharacter::SetSpawnPoint()
+{
+	if (HasAuthority() && BlasterPlayerState->GetTeam() != ETeam::ET_NoTeam)
+	{
+		TArray<AActor*> PlayerStarts;
+		UGameplayStatics::GetAllActorsOfClass(this, ATeamPlayerStart::StaticClass(), PlayerStarts);
+		TArray<ATeamPlayerStart*> TeamPlayerStarts;
+		for (auto Start : PlayerStarts)
+		{
+			ATeamPlayerStart* TeamStart = Cast<ATeamPlayerStart>(Start);
+			if (TeamStart && TeamStart->Team == BlasterPlayerState->GetTeam())
+			{
+				TeamPlayerStarts.Add(TeamStart);
+			}
+		}
+
+		if (TeamPlayerStarts.Num() > 0)
+		{
+			ATeamPlayerStart* ChosenPlayerStart = TeamPlayerStarts[FMath::RandRange(0, TeamPlayerStarts.Num() - 1)];
+			SetActorLocationAndRotation(ChosenPlayerStart->GetActorLocation(), ChosenPlayerStart->GetActorRotation());
 		}
 	}
 }
@@ -1237,4 +1302,35 @@ bool ABlasterCharacter::IsLocallyReloading() const
 bool ABlasterCharacter::IsHoldingTheFlagon() const
 {
 	return (CombatComponent && CombatComponent->bHoldingTheFlagon);
+}
+
+ETeam ABlasterCharacter::GetTeam()
+{
+	BlasterPlayerState = BlasterPlayerState == nullptr ? GetPlayerState<ABlasterPlayerState>() : BlasterPlayerState;
+
+	if (BlasterPlayerState == nullptr)
+	{
+		return ETeam::ET_NoTeam;
+	}
+	
+	return BlasterPlayerState->GetTeam();
+}
+
+void ABlasterCharacter::SetHoldingTheFlagon(bool bHolding)
+{
+	if (CombatComponent == nullptr)
+	{
+		return;
+	}
+
+	CombatComponent->bHoldingTheFlagon = bHolding;
+}
+
+void ABlasterCharacter::FlagonDropped()
+{
+	if (CombatComponent && CombatComponent->EquippedWeapon)
+	{
+		bUseControllerRotationYaw = true;
+		GetCharacterMovement()->bOrientRotationToMovement = false;
+	}
 }

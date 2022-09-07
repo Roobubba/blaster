@@ -268,10 +268,17 @@ private:
 	UFUNCTION()
 	void OnRep_HoldingTheFlagon();
 
+	UPROPERTY()
+	AWeapon* TheFlagonWeapon;
+
+	UPROPERTY()
+	class AFlagon* TheFlagon;
+
 public:	
 
 	FORCEINLINE int32 GetGrenades() const { return Grenades; }
 	bool ShouldSwapWeapons();
 	FORCEINLINE float GetDefaultFOV() const { return DefaultFOV; }
 	FORCEINLINE int32 GetCarriedAmmo() const { return CarriedAmmo; }
+	UStaticMeshComponent* GetFlagonStaticMesh();
 };

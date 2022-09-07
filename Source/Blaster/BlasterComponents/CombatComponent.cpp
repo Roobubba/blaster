@@ -17,6 +17,7 @@
 #include "Blaster/GameMode/BlasterGameMode.h"
 #include "Blaster/Character/BlasterAnimInstance.h"
 #include "Blaster/Weapon/Projectile.h"
+#include "Blaster/Weapon/Flagon.h"
 
 UCombatComponent::UCombatComponent()
 {
@@ -242,12 +243,16 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	if (WeaponToEquip->GetWeaponType() == EWeaponType::EWT_Flagon)
 	{
 		bHoldingTheFlagon = true;
-		AttachFlagonToLeftHand(WeaponToEquip);
 		Character->GetCharacterMovement()->bOrientRotationToMovement = true;
 		Character->bUseControllerRotationYaw = false;
 		WeaponToEquip->SetWeaponState(EWeaponState::EWS_Equipped);
+		AttachFlagonToLeftHand(WeaponToEquip);
 		WeaponToEquip->SetOwner(Character);
-		Character->UpdateMovementSpeed();
+		Character->UnCrouch();
+		SetAiming(false);
+		TheFlagonWeapon = WeaponToEquip;
+		TheFlagon = Cast<AFlagon>(TheFlagonWeapon);
+		//Character->UpdateMovementSpeed();
 	}
 	else
 	{
@@ -1118,4 +1123,14 @@ void UCombatComponent::OnRep_HoldingTheFlagon()
 	{
 		Character->UpdateMovementSpeed();
 	}
+}
+
+UStaticMeshComponent* UCombatComponent::GetFlagonStaticMesh()
+{
+	if (TheFlagon)
+	{
+		return TheFlagon->GetFlagonMesh();
+	}
+
+	return nullptr;
 }
