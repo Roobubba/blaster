@@ -73,4 +73,11 @@ private:
 
 	FOnDestroySessionCompleteDelegate DestroySessionCompleteDelegate;
 	FDelegateHandle DestroySessionCompleteDelegateHandle;
+
+	int32 DesiredNumPublicConnections{};
+	FString DesiredMatchType{};
+
+public:
+	FORCEINLINE int32 GetDesiredNumPublicConnections() const { return DesiredNumPublicConnections; } 
+	FORCEINLINE FString GetDesiredMatchType() const { return DesiredMatchType; } 
 };

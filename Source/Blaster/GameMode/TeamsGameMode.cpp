@@ -57,7 +57,6 @@ void ATeamsGameMode::Logout(AController* Exiting)
 
         }
     }
-
 }
 
 void ATeamsGameMode::HandleMatchHasStarted()
