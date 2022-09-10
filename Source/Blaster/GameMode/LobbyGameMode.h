@@ -18,7 +18,16 @@ public:
 
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 	virtual void Logout(AController* Exiting) override;
+	
+protected:
 
 private:
+
+	void SendPlayerListToControllers();
+
+	TArray<FString> LobbyPlayerNames;
+
+	FString MatchType{ "FreeForAll" };
+	int32 MaxNumberOfPlayers{ 2 };
 
 };

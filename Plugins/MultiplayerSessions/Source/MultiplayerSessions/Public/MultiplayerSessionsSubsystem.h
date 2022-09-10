@@ -41,7 +41,6 @@ public:
 	FMultiplayerOnStartSessionComplete MultiplayerOnStartSessionComplete;
 	FMultiplayerOnDestroySessionComplete MultiplayerOnDestroySessionComplete;
 
-
 protected:
 	void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
 	void OnFindSessionsComplete(bool bWasSuccessful);
@@ -74,10 +73,14 @@ private:
 	FOnDestroySessionCompleteDelegate DestroySessionCompleteDelegate;
 	FDelegateHandle DestroySessionCompleteDelegateHandle;
 
+	FOnSessionParticipantsChangeDelegate SessionParticipantsChangeDelegate;
+	FDelegateHandle SessionParticipantsChangeDelegateHandle;
+
 	int32 DesiredNumPublicConnections{};
 	FString DesiredMatchType{};
 
 public:
 	FORCEINLINE int32 GetDesiredNumPublicConnections() const { return DesiredNumPublicConnections; } 
 	FORCEINLINE FString GetDesiredMatchType() const { return DesiredMatchType; } 
+
 };

@@ -19,6 +19,15 @@
 void ABlasterHUD::BeginPlay()
 {
     Super::BeginPlay();
+
+    APlayerController* PlayerController = GetOwningPlayerController();
+    if (PlayerController)
+    {
+        FInputModeGameOnly InputModeData;
+        PlayerController->SetInputMode(InputModeData);
+        PlayerController->SetShowMouseCursor(false);
+    }
+
     AddCharacterOverlay();
     AddAnnouncement();
     AddChatInput();

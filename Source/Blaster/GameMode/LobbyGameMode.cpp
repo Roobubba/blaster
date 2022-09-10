@@ -3,51 +3,63 @@
 #include "LobbyGameMode.h"
 #include "GameFramework/GameStateBase.h"
 #include "Blaster/PlayerController/LobbyPlayerController.h"
+#include "GameFramework/PlayerState.h"
 #include "MultiplayerSessionsSubsystem.h"
 
 void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
 {
     Super::PostLogin(NewPlayer);
 
+    if (NewPlayer->IsLocalController())
+    {
+        UGameInstance* GameInstance = GetGameInstance();
+        if (GameInstance)
+        {
+            UMultiplayerSessionsSubsystem* Subsystem = GameInstance->GetSubsystem<UMultiplayerSessionsSubsystem>();
+            check(Subsystem);
+
+            MaxNumberOfPlayers = Subsystem->GetDesiredNumPublicConnections();
+            MatchType = Subsystem->GetDesiredMatchType();
+        }
+    }
+
     int32 NumberOfPlayers = GameState.Get()->PlayerArray.Num();
 
-    UGameInstance* GameInstance = GetGameInstance();
-    if (GameInstance)
+    LobbyPlayerNames.Empty();
+
+    for (APlayerState* LobbyPlayerState : GameState.Get()->PlayerArray)
     {
-        UMultiplayerSessionsSubsystem* Subsystem = GameInstance->GetSubsystem<UMultiplayerSessionsSubsystem>();
-        check(Subsystem);
+        FString NewName = LobbyPlayerState->GetPlayerName();
+        LobbyPlayerNames.Add(NewName);
+    }
 
-        for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); Iterator; ++Iterator)
+    ALobbyPlayerController* NewLobbyPlayerController = Cast<ALobbyPlayerController>(NewPlayer);
+    if (NewLobbyPlayerController)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Sending MulticastSetLobbyDetails"));
+        NewLobbyPlayerController->MulticastSetLobbyDetails(MaxNumberOfPlayers, MatchType);
+
+        SendPlayerListToControllers();
+    }
+
+    if (NumberOfPlayers >= FMath::Max(2, (MaxNumberOfPlayers / 2)))
+    {
+        UWorld* World = GetWorld();
+        if (World)
         {
-            ALobbyPlayerController* LobbyPlayerController = Cast<ALobbyPlayerController>(*Iterator);
-            if (LobbyPlayerController)
+            bUseSeamlessTravel = true;
+
+            if (MatchType == "Teams")
             {
-                LobbyPlayerController->SetLobbyDetails(Subsystem->GetDesiredNumPublicConnections(), Subsystem->GetDesiredMatchType());
-                LobbyPlayerController->AddPlayer(NewPlayer);
+                World->ServerTravel(FString("/Game/Maps/TeamsMap?listen"));
             }
-        }
-
-        if (NumberOfPlayers >= FMath::Max(2, (Subsystem->GetDesiredNumPublicConnections() / 2)))
-        {
-            UWorld* World = GetWorld();
-            if (World)
+            else if (MatchType == "CaptureTheFlagon")
             {
-                bUseSeamlessTravel = true;
-
-                FString MatchType = Subsystem->GetDesiredMatchType();
-
-                if (MatchType == "Teams")
-                {
-                    World->ServerTravel(FString("/Game/Maps/TeamsMap?listen"));
-                }
-                else if (MatchType == "CaptureTheFlagon")
-                {
-                    World->ServerTravel(FString("/Game/Maps/CaptureTheFlagonMap?listen"));
-                }
-                else
-                {
-                    World->ServerTravel(FString("/Game/Maps/BlasterMap?listen"));
-                }
+                World->ServerTravel(FString("/Game/Maps/CaptureTheFlagonMap?listen"));
+            }
+            else
+            {
+                World->ServerTravel(FString("/Game/Maps/BlasterMap?listen"));
             }
         }
     }
@@ -55,16 +67,27 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
 
 void ALobbyGameMode::Logout(AController* Exiting)
 {
-    APlayerController* ExitingPlayerController = Cast<APlayerController>(Exiting);
-    if (ExitingPlayerController)
+    LobbyPlayerNames.Empty();
+
+    for (APlayerState* LobbyPlayerState : GameState.Get()->PlayerArray)
     {
-        for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); Iterator; ++Iterator)
+        FString NewName = LobbyPlayerState->GetPlayerName();
+        LobbyPlayerNames.Add(NewName);
+    }
+
+    SendPlayerListToControllers();
+
+    Super::Logout(Exiting);
+}
+
+void ALobbyGameMode::SendPlayerListToControllers()
+{
+    for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); Iterator; ++Iterator)
+    {
+        ALobbyPlayerController* LobbyPlayerController = Cast<ALobbyPlayerController>(*Iterator);
+        if (LobbyPlayerController)
         {
-            ALobbyPlayerController* LobbyPlayerController = Cast<ALobbyPlayerController>(*Iterator);
-            if (LobbyPlayerController)
-            {
-                LobbyPlayerController->RemovePlayer(ExitingPlayerController);
-            }
+            LobbyPlayerController->MulticastSetPlayerList(LobbyPlayerNames);
         }
     }
 }
