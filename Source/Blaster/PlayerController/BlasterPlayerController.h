@@ -71,6 +71,9 @@ public:
 	void SetHUDRedTeamScore(int32 RedScore);
 	void SetHUDBlueTeamScore(int32 BlueScore);
 
+	void LoadInputSettings();
+	void SaveInputSettings();
+
 protected:
 
 	virtual void BeginPlay() override;

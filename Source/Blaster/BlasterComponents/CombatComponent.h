@@ -281,4 +281,6 @@ public:
 	FORCEINLINE float GetDefaultFOV() const { return DefaultFOV; }
 	FORCEINLINE int32 GetCarriedAmmo() const { return CarriedAmmo; }
 	UStaticMeshComponent* GetFlagonStaticMesh();
+
+	FORCEINLINE bool TempIsAiming() const { return bAiming; }
 };

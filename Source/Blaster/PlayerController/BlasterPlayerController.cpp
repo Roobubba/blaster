@@ -22,10 +22,16 @@
 #include "Blaster/HUD/ChatInput.h"
 #include "Components/EditableText.h"
 #include "Blaster/BlasterTypes/Announcement.h"
+#include "Blaster/Saveables/SaveableInput.h"
 
 void ABlasterPlayerController::BeginPlay()
 {
     Super::BeginPlay();
+
+    if (IsLocalController())
+    {
+        LoadInputSettings();    
+    }
 
     BlasterHUD = Cast<ABlasterHUD>(GetHUD());
     ServerGetMatchState();
@@ -63,7 +69,6 @@ void ABlasterPlayerController::SetupInputComponent()
 
 void ABlasterPlayerController::ShowReturnToMainMenu()
 {
-    //TODO: Show the Return To Main Menu Widget
     if (ReturnToMainMenuWidget == nullptr)
     {
         return;
@@ -949,7 +954,8 @@ void ABlasterPlayerController::HandleCooldown()
         BlasterCharacter->GetCombat()->FireButtonPressed(false);
         BlasterCharacter->GetCombat()->DisableCrosshairs();
         
-        if (BlasterCharacter->IsAiming())
+        //if (BlasterCharacter->IsAiming()) // suddenly this stopped packaging without any edits to this or the header, totally weird
+        if (BlasterCharacter->GetCombat()->TempIsAiming())
         {
             BlasterCharacter->GetCombat()->SetAiming(false);
 
@@ -1199,3 +1205,39 @@ BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
     }
 }
 
+void ABlasterPlayerController::LoadInputSettings()
+{
+    USaveableInput* Loading = NewObject<USaveableInput>(this);
+	
+    if (Loading && PlayerInput)
+    {
+        Loading->LoadConfig();
+
+        if (Loading->AxisConfig.Num())
+            PlayerInput->AxisConfig = Loading->AxisConfig;
+
+        if (Loading->ActionMappings.Num())
+            PlayerInput->ActionMappings = Loading->ActionMappings;
+
+        if (Loading->AxisMappings.Num())
+            PlayerInput->AxisMappings = Loading->AxisMappings;
+
+        if (Loading->InvertedAxis.Num())
+            PlayerInput->InvertedAxis = Loading->InvertedAxis;
+    }
+}
+
+void ABlasterPlayerController::SaveInputSettings()
+{
+	USaveableInput* Saving = NewObject<USaveableInput>(this);
+
+    if (Saving && PlayerInput)
+    {
+        Saving->AxisConfig = PlayerInput->AxisConfig;
+        Saving->ActionMappings = PlayerInput->ActionMappings;
+        Saving->AxisMappings = PlayerInput->AxisMappings;
+        Saving->InvertedAxis = PlayerInput->InvertedAxis;
+
+        Saving->SaveConfig();
+    }
+}

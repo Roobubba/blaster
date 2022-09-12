@@ -33,9 +33,18 @@ private:
 	UFUNCTION()
 	void ReturnButtonClicked();
 
-	UPROPERTY()
-	class UMultiplayerSessionsSubsystem* MultiplayerSessionsSubsystem;
+	UPROPERTY(meta = (BindWidget))
+	class USlider* SensitivitySlider;
+
+	UFUNCTION()
+	void SensitivitySliderChanged(float Value);
+
+	UPROPERTY(meta = (BindWidget))
+	class UCheckBox* InvertMouseCheckbox;
+
+	UFUNCTION()
+	void InvertMouseCheckboxStateChanged(bool bIsChecked);
 
 	UPROPERTY()
-	class APlayerController* PlayerController;
+	class UMultiplayerSessionsSubsystem* MultiplayerSessionsSubsystem;
 };
